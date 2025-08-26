@@ -67,7 +67,7 @@
 
 // ---------------- Remote catalog ----------------
 #ifndef REMOTE_CATALOG_URL
-#define REMOTE_CATALOG_URL "https://gist.githubusercontent.com/migueltarga/4fe437c93f5b2e8ee59c674a91cd5f9b/raw/kiddo.json"
+#define REMOTE_CATALOG_URL "https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/index.json"
 #endif
 
 // Backlight helpers

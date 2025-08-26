@@ -1,0 +1,14 @@
+{
+  "stories": [
+    {
+      "name": "As Aventuras de Zoe",
+      "file": "story_adventure_pt.json",
+      "lang": "pt-br"
+    },
+    {
+      "name": "The Adventures of Zoe",
+      "file": "story_adventure.json",
+      "lang": "en"
+    }
+  ]
+}

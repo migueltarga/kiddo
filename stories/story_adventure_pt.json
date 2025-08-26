@@ -1,0 +1,134 @@
+{
+  "id": "zoe_aventura",
+  "title": "As Aventuras de Zoe",
+  "start": "inicio",
+  "nodes": {
+    "inicio": {
+      "text": "Zoe tem 4 anos e adora brincar com seu ursinho de pelúcia, Ted.\n Em uma noite estrelada, ela encontra uma porta mágica no meio do seu quarto.\n A porta brilha e parece chamar por eles.",
+      "choices": [
+        {
+          "text": "Entrar na porta",
+          "next": "bosque"
+        }
+      ]
+    },
+    "bosque": {
+      "text": "Zoe segura forte a mão de Ted e atravessa a porta.\nDe repente, eles estão em um bosque encantado cheio de flores coloridas e um cheirinho doce.\nDois caminhos aparecem na frente deles.",
+      "choices": [
+        {
+          "text": "Caminho das flores",
+          "next": "flores"
+        },
+        {
+          "text": "Caminho das pedras",
+          "next": "pedras"
+        }
+      ]
+    },
+    "flores": {
+      "text": "O caminho das flores é macio e brilhante.\nMuitas borboletas azuis, vermelhas e amarelas voam por todo lado.\nUma borboleta gigante pousa na frente deles e fala com voz suave.",
+      "choices": [
+        {
+          "text": "Ouvir borboleta",
+          "next": "borboleta_fala"
+        }
+      ]
+    },
+    "borboleta_fala": {
+      "text": "A borboleta sorri: 'Olá, Zoe e Ted! Sei de um lugar secreto com muitas magias.\n Querem que eu os leve até lá?'",
+      "choices": [
+        {
+          "text": "Aceitar ajuda",
+          "next": "ajuda_borboleta"
+        },
+        {
+          "text": "Seguir sozinhos",
+          "next": "sozinhos"
+        }
+      ]
+    },
+    "ajuda_borboleta": {
+      "text": "A borboleta guia Zoe e Ted entre as flores até chegar em uma árvore enorme.\nDentro dela há um baú dourado.\nZoe abre o baú e encontra vários brinquedos mágicos que se movem sozinhos e conversam com ela.",
+      "choices": [
+        {
+          "text": "Brincar com brinquedos",
+          "next": "fim_brinquedos"
+        }
+      ]
+    },
+    "fim_brinquedos": {
+      "text": "Zoe e Ted brincam até cansar, rindo muito com os brinquedos mágicos.\nQuando o sol começa a se por, eles voltam felizes para casa, levando lembranças do bosque encantado.",
+      "end": true
+    },
+    "sozinhos": {
+      "text": "Zoe e Ted decidem continuar sem ajuda.\n Eles seguem por uma trilha florida até encontrar um lago calmo e cheio de peixinhos coloridos.",
+      "choices": [
+        {
+          "text": "Olhar lago",
+          "next": "lago"
+        }
+      ]
+    },
+    "lago": {
+      "text": "Eles se sentam na beira do lago, jogam pedrinhas na água e observam os círculos se formando.\nTed quase cai dentro da água e Zoe dá muita risada.",
+      "choices": [
+        {
+          "text": "Explorar mais",
+          "next": "fim_lago"
+        }
+      ]
+    },
+    "fim_lago": {
+      "text": "Depois da diversão no lago, Zoe e Ted encontram um caminho de volta para a porta mágica.\nEles voltam para o quarto, felizes com a aventura.",
+      "end": true
+    },
+    "pedras": {
+      "text": "O caminho das pedras brilha como estrelas no chão.\nNo final da trilha, uma ponte de madeira aparece.\nEla é guardada por um sapo falante.",
+      "choices": [
+        {
+          "text": "Falar com sapo",
+          "next": "sapo"
+        }
+      ]
+    },
+    "sapo": {
+      "text": "O sapo diz: 'Para passar pela ponte, vocês precisam responder a minha charada: O que sobe e desce mas nunca sai do lugar?'",
+      "choices": [
+        {
+          "text": "Responder escada",
+          "next": "resposta_certa"
+        },
+        {
+          "text": "Responder nuvem",
+          "next": "resposta_errada"
+        }
+      ]
+    },
+    "resposta_certa": {
+      "text": "Zoe responde: 'É a escada!' O sapo sorri e deixa eles passarem.\nDo outro lado, há um jardim mágico cheio de brinquedos encantados que dançam sozinhos.",
+      "choices": [
+        {
+          "text": "Explorar jardim",
+          "next": "fim_jardim"
+        }
+      ]
+    },
+    "fim_jardim": {
+      "text": "Zoe e Ted brincam no jardim encantado até ficarem sonolentos.\nQuando voltam para casa, Ted cochila nos braços de Zoe, que sorri feliz com a aventura.",
+      "end": true
+    },
+    "resposta_errada": {
+      "text": "Ted responde: 'É a nuvem!' O sapo dá uma risada: 'Não é isso!' Mesmo assim, ele deixa eles descansarem debaixo de uma árvore próxima.",
+      "choices": [
+        {
+          "text": "Descansar",
+          "next": "fim_descanso"
+        }
+      ]
+    },
+    "fim_descanso": {
+      "text": "Zoe e Ted dormem um pouquinho debaixo da árvore e acordam já no quarto de Zoe.\nA porta mágica desapareceu, mas a lembrança da aventura ficou no coração deles.",
+      "end": true
+    }
+  }
+}
