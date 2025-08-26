@@ -2,6 +2,8 @@
 
 A fun, interactive storytelling device built for kids using an ESP32 with a touchscreen display. Create and explore stories with different paths and choices, all designed to spark imagination and creativity.
 
+![kiddo](https://github.com/migueltarga/kiddo/blob/main/images/IMG_3661.jpg?raw=true)
+
 ## Hardware Requirements
 
 This project uses affordable, easily accessible hardware:
