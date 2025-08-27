@@ -11,8 +11,6 @@ namespace story
 
     void loadFromFS();
 
-    void syncFromHTTP(const String &baseUrl, bool enabled);
-
     void ensureSampleStories();
 
     bool parseStoryJson(const String &json, Story_t &out);
