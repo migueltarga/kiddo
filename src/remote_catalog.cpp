@@ -198,21 +198,39 @@ namespace remote_catalog
 
     int clearDownloads()
     {
-        std::vector<String> paths;
-        paths.reserve(g_entries.size());
-        for (const auto &ent : g_entries) {
-            paths.push_back(String("/") + ent.file);
-        }
-        
         int removed = 0;
-        for (const auto &path : paths) {
-            if (SPIFFS.exists(path)) {
-                if (SPIFFS.remove(path)) {
-                    ++removed;
+        
+        File root = SPIFFS.open("/");
+        if (root && root.isDirectory()) {
+            std::vector<String> filesToRemove;
+            File file = root.openNextFile();
+            while (file) {
+                if (!file.isDirectory()) {
+                    String filename = file.name();
+                    String filepath = file.path();
+                    if (filename.endsWith(".json") && filename != "/index.json" && filepath != "/index.json") {
+                        String normalizedPath = filepath.startsWith("/") ? filepath : ("/" + filepath);
+                        filesToRemove.push_back(normalizedPath);
+                    }
                 }
-                story_utils::removeFromIndex(path);
+                file.close();
+                file = root.openNextFile();
+            }
+            root.close();
+            
+            // Remove all found story files
+            for (const auto &path : filesToRemove) {
+                if (SPIFFS.exists(path)) {
+                    if (SPIFFS.remove(path)) {
+                        ++removed;
+                    }
+                }
             }
         }
+        
+        JsonDocument emptyIndex;
+        emptyIndex["stories"].to<JsonArray>();
+        story_utils::saveIndex(emptyIndex);
         
         story::loadFromFS();
         return removed;

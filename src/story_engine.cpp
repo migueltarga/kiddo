@@ -62,9 +62,14 @@ namespace story
         return cleaned;
     }
 
-    // --- Sample stories (truncated to keep file manageable) ---
+    // --- Sample stories ---
     void ensureSampleStories()
     {
+        // Check if sample stories already exist
+        if (storage::exists("/story_sample.json") && storage::exists("/story_sample_pt.json")) {
+            return;
+        }
+        
         const char *indexJson = R"JSON({
             "stories": [
                 { "file": "/story_sample.json", "name": "Sample Story", "lang": "en" },
