@@ -8,7 +8,9 @@
 #include "async_manager.h"
 #include "image_display.h"
 #include "styles.h"
+#include "inventory_manager.h"
 #include "ui/components/ui_components.h"
+#include "ui/components/inventory_ui.h"
 #include "ui/fonts.h"
 #include "ui_screens.h"
 #include "kiddo_parser.h"
@@ -20,6 +22,7 @@ namespace
 {
 	String g_current_node;
 	const Story_t *g_story = nullptr;
+	lv_obj_t *g_inventory_btn = nullptr;
 }
 
 extern uint8_t story_font_scale;
@@ -98,6 +101,21 @@ static void show_node(const String &key)
 	config.enable_marquee = true;
 	lv_obj_t *header = ui_header_create(scr, &config);
 	int header_h = 44;
+	
+	// Add inventory button if story has inventory
+	g_inventory_btn = nullptr;
+	if (g_story->has_inventory) {
+		g_inventory_btn = InventoryUI::createInventoryButton(header, []() {
+			InventoryUI::showInventoryDialog();
+		});
+		lv_obj_align(g_inventory_btn, LV_ALIGN_RIGHT_MID, -50, 0); // Position left of back button
+	}
+	
+	// Process any inventory actions for this node
+	if (g_story->has_inventory && n->gives_item.length() > 0) {
+		// Add item to inventory (we'll need to define item properties somewhere)
+		InventoryManager::getCurrentInventory().addItem(n->gives_item, n->gives_item, "");
+	}
 	
 	lv_coord_t content_h = SCREEN_HEIGHT - header_h;
 	lv_obj_t *content = lv_obj_create(scr);
@@ -210,6 +228,16 @@ static void show_node(const String &key)
 	{
 		for (const auto &ch : n->choices)
 		{
+			// Check inventory requirements
+			if (g_story->has_inventory) {
+				bool has_required_item = InventoryManager::getCurrentInventory().hasItem(ch.required_item);
+				
+				// Skip hidden choices if requirement not met
+				if (ch.hidden_without_item && !has_required_item) {
+					continue;
+				}
+			}
+			
 			lv_obj_t *b = lv_btn_create(choices);
 			ui_add_click_sound(b);
 			ui_add_click_sound(b);
@@ -224,21 +252,50 @@ static void show_node(const String &key)
 			{
 				lv_obj_set_height(b, 34);
 			}
-			apply_primary_button_style(b);
-			char *nextKey = (char *)malloc(ch.next.length() + 1);
-			strcpy(nextKey, ch.next.c_str());
-			lv_obj_add_event_cb(
-				b,
-				[](lv_event_t *e)
-				{
-					char *nk = (char *)lv_event_get_user_data(e);
-					if (!nk)
-						return;
-					String key = nk;
-					free(nk);
-					show_node(key);
-				},
-				LV_EVENT_CLICKED, nextKey);
+			
+			// Check if choice should be disabled due to missing inventory item
+			bool is_disabled = false;
+			if (g_story->has_inventory && ch.required_item.length() > 0) {
+				is_disabled = !InventoryManager::getCurrentInventory().hasItem(ch.required_item);
+			}
+			
+			if (is_disabled) {
+				// Apply disabled styling
+				lv_obj_set_style_bg_color(b, lv_color_hex(0xcccccc), 0);
+				lv_obj_set_style_text_color(b, lv_color_hex(0x888888), 0);
+				lv_obj_clear_flag(b, LV_OBJ_FLAG_CLICKABLE);
+			} else {
+				apply_primary_button_style(b);
+			}
+			
+			// Store choice data for callback
+			struct ChoiceData {
+				String next;
+				String gives_item;
+			};
+			ChoiceData* choice_data = new ChoiceData{ch.next, ch.gives_item};
+			
+			if (!is_disabled) {
+				lv_obj_add_event_cb(
+					b,
+					[](lv_event_t *e)
+					{
+						ChoiceData* data = (ChoiceData*)lv_event_get_user_data(e);
+						if (!data)
+							return;
+						
+						// Handle inventory actions
+						if (g_story->has_inventory && data->gives_item.length() > 0) {
+							InventoryManager::getCurrentInventory().addItem(data->gives_item, data->gives_item, "");
+						}
+						
+						String key = data->next;
+						delete data;
+						show_node(key);
+					},
+					LV_EVENT_CLICKED, choice_data);
+			}
+			
 			lv_obj_t *l = lv_label_create(b);
 			lv_label_set_text(l, ch.text.c_str());
 			lv_obj_set_style_text_font(l, story_body_font(), 0);
@@ -282,6 +339,12 @@ static void show_node(const String &key)
 void ui_story_screen_show(const Story_t &st, const String &nodeKey)
 {
 	g_story = &st;
+	
+	// Initialize inventory if the story has one
+	if (g_story->has_inventory) {
+		InventoryManager::getCurrentInventory().initialize(g_story->initial_inventory);
+	}
+	
 	show_node(nodeKey);
 }
 void ui_story_screen_refresh()

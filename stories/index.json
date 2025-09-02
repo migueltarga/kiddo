@@ -9,6 +9,31 @@
       "name": "The Adventures of Zoe",
       "file": "story_adventure.json",
       "lang": "en"
+    },
+    {
+      "name": "The Magic Key Adventure",
+      "file": "story_inventory_test.json",
+      "lang": "en"
+    },
+    {
+      "name": "Treasure Hunt Island",
+      "file": "story_treasure_hunt.json",
+      "lang": "en"
+    },
+    {
+      "name": "Magic School Adventure",
+      "file": "story_magic_school.json",
+      "lang": "en"
+    },
+    {
+      "name": "Space Station Alpha",
+      "file": "story_space_adventure.json",
+      "lang": "en"
+    },
+    {
+      "name": "The Mystery Detective",
+      "file": "story_detective.json",
+      "lang": "en"
     }
   ]
 }

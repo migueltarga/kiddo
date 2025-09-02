@@ -1,0 +1,427 @@
+{
+  "id": "space_adventure",
+  "title": "Captain Zara's Space Mission",
+  "start": "spaceship",
+  "has_inventory": true,
+  "initial_inventory": [
+    {
+      "id": "space_helmet",
+      "name": "Space Helmet",
+      "icon": ""
+    },
+    {
+      "id": "laser_tool",
+      "name": "Laser Tool",
+      "icon": ""
+    }
+  ],
+  "nodes": {
+    "spaceship": {
+      "text": "Captain Zara, you're aboard your spaceship approaching the mysterious Planet Zephyr. Your mission is to collect space crystals for Earth's energy needs. The computer beeps with three landing options.",
+      "choices": [
+        {
+          "text": "Land near the crystal caves",
+          "next": "crystal_caves"
+        },
+        {
+          "text": "Land at the alien space station",
+          "next": "space_station"
+        },
+        {
+          "text": "Land in the purple forest",
+          "next": "purple_forest"
+        }
+      ]
+    },
+    "crystal_caves": {
+      "text": "You land near glowing crystal caves. The atmosphere here is breathable, but your scanner detects dangerous gas pockets deeper in the caves.",
+      "choices": [
+        {
+          "text": "Enter the caves with your helmet",
+          "next": "safe_cave_entry",
+          "required_item": "space_helmet"
+        },
+        {
+          "text": "Enter the caves without protection",
+          "next": "dangerous_cave_entry"
+        },
+        {
+          "text": "Scan the area first",
+          "next": "scan_caves"
+        }
+      ]
+    },
+    "safe_cave_entry": {
+      "text": "With your space helmet protecting you from the gas, you safely explore the caves and find beautiful energy crystals glowing on the walls!",
+      "gives_item": "energy_crystals",
+      "choices": [
+        {
+          "text": "Use laser tool to carefully extract crystals",
+          "next": "extract_crystals",
+          "required_item": "laser_tool"
+        },
+        {
+          "text": "Try to take crystals by hand",
+          "next": "hand_extraction"
+        }
+      ]
+    },
+    "dangerous_cave_entry": {
+      "text": "The gas makes you dizzy! You quickly retreat back to the entrance. You'll need proper protection to explore safely.",
+      "choices": [
+        {
+          "text": "Go back to spaceship for helmet",
+          "next": "crystal_caves"
+        },
+        {
+          "text": "Try a different landing site",
+          "next": "spaceship"
+        }
+      ]
+    },
+    "scan_caves": {
+      "text": "Your scanner reveals the caves contain amazing energy crystals, but also shows a hidden passage leading to an underground alien city!",
+      "choices": [
+        {
+          "text": "Enter caves to find the city",
+          "next": "safe_cave_entry",
+          "required_item": "space_helmet"
+        },
+        {
+          "text": "Try a different approach",
+          "next": "spaceship"
+        }
+      ]
+    },
+    "extract_crystals": {
+      "text": "Your laser tool perfectly cuts the crystals without damaging them! You collect enough energy crystals to power Earth for years. But wait - you hear friendly alien voices echoing from deeper in the cave!",
+      "choices": [
+        {
+          "text": "Follow the voices to meet the aliens",
+          "next": "meet_cave_aliens"
+        },
+        {
+          "text": "Return to spaceship with crystals",
+          "next": "crystal_success"
+        }
+      ]
+    },
+    "hand_extraction": {
+      "text": "You try to break the crystals by hand, but they're too hard! Some of them crack and lose their energy. You need the right tools for this delicate work.",
+      "choices": [
+        {
+          "text": "Use your laser tool instead",
+          "next": "extract_crystals",
+          "required_item": "laser_tool"
+        },
+        {
+          "text": "Look for other crystals",
+          "next": "scan_caves"
+        }
+      ]
+    },
+    "meet_cave_aliens": {
+      "text": "You meet the Crystal Keepers - friendly underground aliens who protect the energy crystals! They're amazed by your respectful approach and give you a special translator device.",
+      "gives_item": "translator",
+      "choices": [
+        {
+          "text": "Ask about their civilization",
+          "next": "learn_alien_culture"
+        },
+        {
+          "text": "Ask for more crystals",
+          "next": "negotiate_crystals"
+        }
+      ]
+    },
+    "space_station": {
+      "text": "You dock at a gleaming alien space station. Friendly blue aliens greet you with strange musical sounds. They seem curious about your mission.",
+      "choices": [
+        {
+          "text": "Try to communicate with gestures",
+          "next": "gesture_communication"
+        },
+        {
+          "text": "Use translator if you have one",
+          "next": "translator_communication",
+          "required_item": "translator"
+        },
+        {
+          "text": "Show them your laser tool",
+          "next": "show_technology"
+        }
+      ]
+    },
+    "gesture_communication": {
+      "text": "Through creative gestures and drawings, you manage to explain your peaceful mission! The aliens understand and offer to help you find crystals. They give you a special energy scanner.",
+      "gives_item": "energy_scanner",
+      "choices": [
+        {
+          "text": "Accept their help and explore together",
+          "next": "alien_guided_exploration"
+        },
+        {
+          "text": "Thank them and explore alone",
+          "next": "solo_exploration"
+        }
+      ]
+    },
+    "translator_communication": {
+      "text": "Your translator works perfectly! The aliens are delighted to speak with you. They tell you about secret crystal gardens and offer to share their knowledge of the planet.",
+      "choices": [
+        {
+          "text": "Learn about crystal gardens",
+          "next": "crystal_gardens"
+        },
+        {
+          "text": "Ask about their technology",
+          "next": "alien_technology"
+        }
+      ]
+    },
+    "show_technology": {
+      "text": "The aliens are fascinated by your laser tool! They show you their own amazing technology - machines that can grow crystals instantly! They offer to trade technologies.",
+      "choices": [
+        {
+          "text": "Trade your laser tool for crystal grower",
+          "next": "technology_trade"
+        },
+        {
+          "text": "Keep your tool and learn about theirs",
+          "next": "alien_technology"
+        }
+      ]
+    },
+    "technology_trade": {
+      "text": "You trade your laser tool for their amazing crystal growing machine! Now you can create energy crystals anywhere in the galaxy!",
+      "gives_item": "crystal_grower",
+      "choices": [
+        {
+          "text": "Test the crystal grower",
+          "next": "test_grower"
+        },
+        {
+          "text": "Explore the planet with new alien friends",
+          "next": "alien_guided_exploration"
+        }
+      ]
+    },
+    "purple_forest": {
+      "text": "You land in a beautiful purple forest where the trees sing gentle melodies. Strange fruit hangs from the branches, glowing with inner light.",
+      "choices": [
+        {
+          "text": "Scan the glowing fruit",
+          "next": "scan_fruit",
+          "required_item": "energy_scanner"
+        },
+        {
+          "text": "Try the glowing fruit",
+          "next": "taste_fruit"
+        },
+        {
+          "text": "Follow the singing deeper into forest",
+          "next": "deep_forest"
+        }
+      ]
+    },
+    "scan_fruit": {
+      "text": "Your energy scanner reveals the fruit contains pure energy essence - even more powerful than crystals! This could be the perfect solution for Earth's energy needs.",
+      "choices": [
+        {
+          "text": "Carefully collect the fruit",
+          "next": "collect_energy_fruit"
+        },
+        {
+          "text": "Study the trees first",
+          "next": "study_trees"
+        }
+      ]
+    },
+    "taste_fruit": {
+      "text": "The fruit tastes like starlight and makes you feel incredibly energetic! You can feel cosmic energy flowing through you, but you're not sure if it's safe.",
+      "choices": [
+        {
+          "text": "Collect more fruit for Earth",
+          "next": "collect_energy_fruit"
+        },
+        {
+          "text": "Study the effects first",
+          "next": "study_trees"
+        }
+      ]
+    },
+    "deep_forest": {
+      "text": "Following the singing, you discover the forest is actually alive! The trees are ancient, wise beings who have been waiting to meet space travelers like you.",
+      "choices": [
+        {
+          "text": "Communicate with translator",
+          "next": "talk_to_trees",
+          "required_item": "translator"
+        },
+        {
+          "text": "Listen to their songs",
+          "next": "listen_to_trees"
+        }
+      ]
+    },
+    "talk_to_trees": {
+      "text": "Using your translator, you have an amazing conversation with the wise tree beings! They offer to share their energy fruit with Earth, but only if you promise to protect nature.",
+      "choices": [
+        {
+          "text": "Promise to protect nature",
+          "next": "nature_guardian_ending"
+        },
+        {
+          "text": "Ask for time to think",
+          "next": "study_trees"
+        }
+      ]
+    },
+    "listen_to_trees": {
+      "text": "You listen carefully to their beautiful songs and somehow understand their message of peace and harmony. They sense your good heart and offer you their friendship.",
+      "choices": [
+        {
+          "text": "Accept their friendship",
+          "next": "tree_friendship_ending"
+        },
+        {
+          "text": "Try to learn their language",
+          "next": "study_trees"
+        }
+      ]
+    },
+    "alien_guided_exploration": {
+      "text": "With your alien friends as guides, you discover the most amazing crystal formations in the galaxy! Together you collect enough energy to help both Earth and their planet thrive.",
+      "choices": [
+        {
+          "text": "Celebrate your success together",
+          "next": "friendship_ending"
+        }
+      ]
+    },
+    "crystal_gardens": {
+      "text": "The aliens take you to secret crystal gardens where energy crystals grow like flowers! It's the most beautiful sight you've ever seen in space.",
+      "choices": [
+        {
+          "text": "Learn to tend the crystal gardens",
+          "next": "garden_keeper_ending"
+        },
+        {
+          "text": "Take some crystals back to Earth",
+          "next": "crystal_success"
+        }
+      ]
+    },
+    "alien_technology": {
+      "text": "You learn about incredible alien technologies that use harmony and music to power their civilization. They teach you how to create energy through positive emotions!",
+      "choices": [
+        {
+          "text": "Master their peaceful technology",
+          "next": "peace_technology_ending"
+        }
+      ]
+    },
+    "test_grower": {
+      "text": "The crystal grower works amazingly! You create beautiful energy crystals that will provide clean, renewable energy for countless worlds.",
+      "choices": [
+        {
+          "text": "Share this technology with the galaxy",
+          "next": "technology_sharing_ending"
+        }
+      ]
+    },
+    "collect_energy_fruit": {
+      "text": "You carefully collect the energy fruit. It contains more power than you ever imagined possible! This discovery will revolutionize energy throughout the galaxy.",
+      "choices": [
+        {
+          "text": "Return to Earth with the fruit",
+          "next": "fruit_success_ending"
+        }
+      ]
+    },
+    "study_trees": {
+      "text": "You spend time studying the amazing tree beings and learn they're ancient guardians of cosmic energy. They teach you the secrets of living in harmony with nature.",
+      "choices": [
+        {
+          "text": "Become a student of their wisdom",
+          "next": "wisdom_student_ending"
+        }
+      ]
+    },
+    "crystal_success": {
+      "text": "Mission accomplished! You return to Earth with enough energy crystals to power the planet cleanly for decades. You're hailed as a hero and the greatest space explorer ever!",
+      "end": true
+    },
+    "friendship_ending": {
+      "text": "You've made lifelong friends across the galaxy! You establish the first intergalactic friendship treaty and become an ambassador of peace between worlds. Your space adventures are just beginning!",
+      "end": true
+    },
+    "nature_guardian_ending": {
+      "text": "You become the Guardian of Nature across the galaxy! The wise trees share their energy freely with all peaceful worlds, and you spend your life protecting beautiful planets everywhere.",
+      "end": true
+    },
+    "tree_friendship_ending": {
+      "text": "The tree beings adopt you as their space guardian! You learn to communicate through song and music, spreading harmony and peace throughout the cosmos.",
+      "end": true
+    },
+    "garden_keeper_ending": {
+      "text": "You become the Keeper of the Crystal Gardens! You learn to grow the most beautiful energy crystals in the galaxy and teach others how to create sustainable energy sources.",
+      "end": true
+    },
+    "peace_technology_ending": {
+      "text": "You master the alien peace technology and become a teacher of harmony! You travel the galaxy showing civilizations how to create energy through love, friendship, and positive emotions.",
+      "end": true
+    },
+    "technology_sharing_ending": {
+      "text": "You become the Galaxy's Technology Ambassador! You share the crystal growing technology with all peaceful worlds, creating an age of abundance and cooperation throughout space.",
+      "end": true
+    },
+    "fruit_success_ending": {
+      "text": "The energy fruit transforms Earth into a paradise! Clean, unlimited energy powers amazing inventions that help everyone live happily. You're remembered as the explorer who saved the world!",
+      "end": true
+    },
+    "wisdom_student_ending": {
+      "text": "You become a Student of Cosmic Wisdom! The ancient trees teach you the deepest secrets of the universe, and you spend your life exploring the galaxy with wonder and understanding.",
+      "end": true
+    },
+    "solo_exploration": {
+      "text": "You explore Planet Zephyr on your own and discover hidden wonders everywhere! Your independent spirit leads you to amazing discoveries that benefit all of space.",
+      "choices": [
+        {
+          "text": "Document your discoveries",
+          "next": "explorer_ending"
+        }
+      ]
+    },
+    "explorer_ending": {
+      "text": "You become the Galaxy's Greatest Explorer! Your detailed maps and discoveries help countless other space travelers find wonder and adventure among the stars.",
+      "end": true
+    },
+    "learn_alien_culture": {
+      "text": "You learn about the amazing Crystal Keeper civilization and become their first human friend! They share ancient knowledge about energy and crystals that helps both your worlds prosper.",
+      "choices": [
+        {
+          "text": "Become their cultural ambassador",
+          "next": "cultural_ambassador_ending"
+        }
+      ]
+    },
+    "negotiate_crystals": {
+      "text": "The Crystal Keepers appreciate your honesty and fair approach! They agree to share their crystals with Earth in exchange for knowledge about human culture and technology.",
+      "choices": [
+        {
+          "text": "Establish a peaceful trade agreement",
+          "next": "trade_agreement_ending"
+        }
+      ]
+    },
+    "cultural_ambassador_ending": {
+      "text": "You become the first Cultural Ambassador between humans and Crystal Keepers! You spend your life building bridges of understanding between different civilizations across the galaxy.",
+      "end": true
+    },
+    "trade_agreement_ending": {
+      "text": "You establish the Galaxy's first interspecies trade agreement! Both humans and Crystal Keepers prosper through peaceful cooperation, setting an example for all worlds to follow.",
+      "end": true
+    }
+  }
+}

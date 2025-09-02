@@ -83,4 +83,7 @@ typedef struct {
 lv_obj_t* ui_loading_overlay_create(lv_obj_t* parent, const ui_loading_overlay_config_t* config);
 ui_loading_overlay_config_t ui_loading_overlay_config_default(const char* message);
 
+// Include inventory UI
+#include "inventory_ui.h"
+
 #endif // UI_COMPONENTS_H

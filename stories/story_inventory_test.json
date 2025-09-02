@@ -1,0 +1,129 @@
+{
+  "id": "inventory_adventure",
+  "title": "The Magic Key Adventure",
+  "start": "start",
+  "has_inventory": true,
+  "initial_inventory": [
+    {
+      "id": "map",
+      "name": "Old Map",
+      "icon": ""
+    }
+  ],
+  "nodes": {
+    "start": {
+      "text": "You wake up in a mysterious forest with only an old map in your backpack.\nThere are two paths ahead of you.",
+      "choices": [
+        {
+          "text": "Take the left path",
+          "next": "left_path"
+        },
+        {
+          "text": "Take the right path",
+          "next": "right_path"
+        },
+        {
+          "text": "Check your map first",
+          "next": "check_map",
+          "required_item": "map"
+        }
+      ]
+    },
+    "check_map": {
+      "text": "You look at your old map. It shows a secret passage to the right!",
+      "choices": [
+        {
+          "text": "Follow the secret passage",
+          "next": "secret_passage"
+        },
+        {
+          "text": "Ignore the map and go left",
+          "next": "left_path"
+        }
+      ]
+    },
+    "left_path": {
+      "text": "You walk down the left path and find a shiny golden key on the ground.",
+      "gives_item": "golden_key",
+      "choices": [
+        {
+          "text": "Continue forward",
+          "next": "locked_door"
+        }
+      ]
+    },
+    "right_path": {
+      "text": "You walk down the right path and see a locked door ahead.",
+      "choices": [
+        {
+          "text": "Try to open the door",
+          "next": "try_door"
+        },
+        {
+          "text": "Go back",
+          "next": "start"
+        }
+      ]
+    },
+    "secret_passage": {
+      "text": "Following the map, you find a hidden tunnel that leads to a treasure chamber!",
+      "gives_item": "treasure",
+      "choices": [
+        {
+          "text": "Take the treasure and leave",
+          "next": "victory_with_treasure"
+        }
+      ]
+    },
+    "try_door": {
+      "text": "The door is locked tight. You need a key to open it.",
+      "choices": [
+        {
+          "text": "Use the golden key",
+          "next": "unlock_door",
+          "required_item": "golden_key"
+        },
+        {
+          "text": "Look for another way",
+          "next": "left_path",
+          "hidden_without_item": false
+        },
+        {
+          "text": "Go back to start",
+          "next": "start"
+        }
+      ]
+    },
+    "locked_door": {
+      "text": "You arrive at the same locked door, but now you have the golden key!",
+      "choices": [
+        {
+          "text": "Use the golden key",
+          "next": "unlock_door",
+          "required_item": "golden_key"
+        },
+        {
+          "text": "Go back",
+          "next": "start"
+        }
+      ]
+    },
+    "unlock_door": {
+      "text": "The golden key works perfectly! The door opens to reveal a beautiful garden.",
+      "choices": [
+        {
+          "text": "Enter the garden",
+          "next": "garden"
+        }
+      ]
+    },
+    "garden": {
+      "text": "You enter a magical garden filled with singing flowers and dancing butterflies. You've found paradise!",
+      "end": true
+    },
+    "victory_with_treasure": {
+      "text": "You escape through the secret tunnel with the ancient treasure. You're rich and safe!",
+      "end": true
+    }
+  }
+}

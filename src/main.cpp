@@ -9,6 +9,7 @@
 #include "file_system.h"
 #include "async_manager.h"
 #include "story_engine.h"
+#include "inventory_manager.h"
 #include "ui/screens/ui_screens.h"
 #include "ui/app_ui.h"
 #include "ui/fonts.h"
@@ -132,6 +133,8 @@ void setup()
     }
     
     AsyncManager::init();
+    
+    InventoryManager::initialize();
     
     story::loadFromFS();
     ui_story_set_home_cb([]() { ui_router::show_home(); });
