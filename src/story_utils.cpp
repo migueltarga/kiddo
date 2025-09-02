@@ -11,14 +11,13 @@ namespace story_utils
     bool matchesLanguage(Language currentLang, const String& lang) 
     {
         return (currentLang == LANG_PT && lang == "pt-br") || 
-               (currentLang == LANG_EN && lang == "en") || 
-               currentLang == LANG_EN;
+               (currentLang == LANG_EN && lang == "en");
     }
     
     bool shouldShowContent(const String& contentLang)
     {
-        // Show content if it matches current language OR if current language is English (fallback)
-        return story_utils::matchesLanguage(current_language, contentLang) || current_language == LANG_EN;
+        // Show content if it matches current language (includes English fallback)
+        return story_utils::matchesLanguage(current_language, contentLang);
     }
     
     String currentLanguageToString()

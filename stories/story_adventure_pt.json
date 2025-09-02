@@ -4,7 +4,7 @@
   "start": "inicio",
   "nodes": {
     "inicio": {
-      "text": "Zoe tem 4 anos e adora brincar com seu ursinho de pelúcia, Ted.\n Em uma noite estrelada, ela encontra uma porta mágica no meio do seu quarto.\n A porta brilha e parece chamar por eles.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/1.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/1.jpg[/img]Zoe tem 4 anos e adora brincar com seu ursinho de pelúcia, Ted.\n Em uma noite estrelada, ela encontra uma porta mágica no meio do seu quarto.\n A porta brilha e parece chamar por eles.",
       "choices": [
         {
           "text": "Entrar na porta",
@@ -13,7 +13,7 @@
       ]
     },
     "bosque": {
-      "text": "Zoe segura forte a mão de Ted e atravessa a porta.\nDe repente, eles estão em um bosque encantado cheio de flores coloridas e um cheirinho doce.\nDois caminhos aparecem na frente deles.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/2.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/2.jpg[/img]Zoe segura forte a mão de Ted e atravessa a porta.\nDe repente, eles estão em um bosque encantado cheio de flores coloridas e um cheirinho doce.\nDois caminhos aparecem na frente deles.",
       "choices": [
         {
           "text": "Caminho das flores",
@@ -26,7 +26,7 @@
       ]
     },
     "flores": {
-      "text": "O caminho das flores é macio e brilhante.\nMuitas borboletas azuis, vermelhas e amarelas voam por todo lado.\nUma borboleta gigante pousa na frente deles e fala com voz suave.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]O caminho das flores é macio e brilhante.\nMuitas borboletas azuis, vermelhas e amarelas voam por todo lado.\nUma borboleta gigante pousa na frente deles e fala com voz suave.",
       "choices": [
         {
           "text": "Ouvir borboleta",
@@ -35,7 +35,7 @@
       ]
     },
     "borboleta_fala": {
-      "text": "A borboleta sorri: 'Olá, Zoe e Ted! Sei de um lugar secreto com muitas magias.\n Querem que eu os leve até lá?'[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/4.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/4.jpg[/img]A borboleta sorri: 'Olá, Zoe e Ted! Sei de um lugar secreto com muitas magias.\n Querem que eu os leve até lá?'",
       "choices": [
         {
           "text": "Aceitar ajuda",
@@ -48,7 +48,7 @@
       ]
     },
     "ajuda_borboleta": {
-      "text": "A borboleta guia Zoe e Ted entre as flores até chegar em uma árvore enorme.\nDentro dela há um baú dourado.\nZoe abre o baú e encontra vários brinquedos mágicos que se movem sozinhos e conversam com ela.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]A borboleta guia Zoe e Ted entre as flores até chegar em uma árvore enorme.\nDentro dela há um baú dourado.\nZoe abre o baú e encontra vários brinquedos mágicos que se movem sozinhos e conversam com ela.",
       "choices": [
         {
           "text": "Brincar com brinquedos",
@@ -57,11 +57,11 @@
       ]
     },
     "fim_brinquedos": {
-      "text": "Zoe e Ted brincam até cansar, rindo muito com os brinquedos mágicos.\nQuando o sol começa a se por, eles voltam felizes para casa, levando lembranças do bosque encantado.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe e Ted brincam até cansar, rindo muito com os brinquedos mágicos.\nQuando o sol começa a se por, eles voltam felizes para casa, levando lembranças do bosque encantado.",
       "end": true
     },
     "sozinhos": {
-      "text": "Zoe e Ted decidem continuar sem ajuda.\n Eles seguem por uma trilha florida até encontrar um lago calmo e cheio de peixinhos coloridos.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/7.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/7.jpg[/img]Zoe e Ted decidem continuar sem ajuda.\n Eles seguem por uma trilha florida até encontrar um lago calmo e cheio de peixinhos coloridos.",
       "choices": [
         {
           "text": "Olhar lago",
@@ -70,7 +70,7 @@
       ]
     },
     "lago": {
-      "text": "Eles se sentam na beira do lago, jogam pedrinhas na água e observam os círculos se formando.\nTed quase cai dentro da água e Zoe dá muita risada.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]Eles se sentam na beira do lago, jogam pedrinhas na água e observam os círculos se formando.\nTed quase cai dentro da água e Zoe dá muita risada.",
       "choices": [
         {
           "text": "Explorar mais",
@@ -79,11 +79,11 @@
       ]
     },
     "fim_lago": {
-      "text": "Depois da diversão no lago, Zoe e Ted encontram um caminho de volta para a porta mágica.\nEles voltam para o quarto, felizes com a aventura.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Depois da diversão no lago, Zoe e Ted encontram um caminho de volta para a porta mágica.\nEles voltam para o quarto, felizes com a aventura.",
       "end": true
     },
     "pedras": {
-      "text": "O caminho das pedras brilha como estrelas no chão.\nNo final da trilha, uma ponte de madeira aparece.\nEla é guardada por um sapo falante.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/10.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/10.jpg[/img]O caminho das pedras brilha como estrelas no chão.\nNo final da trilha, uma ponte de madeira aparece.\nEla é guardada por um sapo falante.",
       "choices": [
         {
           "text": "Falar com sapo",
@@ -105,7 +105,7 @@
       ]
     },
     "resposta_certa": {
-      "text": "Zoe responde: 'É a escada!' O sapo sorri e deixa eles passarem.\nDo outro lado, há um jardim mágico cheio de brinquedos encantados que dançam sozinhos.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/11.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/11.jpg[/img]Zoe responde: 'É a escada!' O sapo sorri e deixa eles passarem.\nDo outro lado, há um jardim mágico cheio de brinquedos encantados que dançam sozinhos.",
       "choices": [
         {
           "text": "Explorar jardim",
@@ -114,11 +114,11 @@
       ]
     },
     "fim_jardim": {
-      "text": "Zoe e Ted brincam no jardim encantado até ficarem sonolentos.\nQuando voltam para casa, Ted cochila nos braços de Zoe, que sorri feliz com a aventura.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe e Ted brincam no jardim encantado até ficarem sonolentos.\nQuando voltam para casa, Ted cochila nos braços de Zoe, que sorri feliz com a aventura.",
       "end": true
     },
     "resposta_errada": {
-      "text": "Ted responde: 'É a nuvem!' O sapo dá uma risada: 'Não é isso!' Mesmo assim, ele deixa eles descansarem debaixo de uma árvore próxima.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Ted responde: 'É a nuvem!' O sapo dá uma risada: 'Não é isso!' Mesmo assim, ele deixa eles descansarem debaixo de uma árvore próxima.",
       "choices": [
         {
           "text": "Descansar",
@@ -127,7 +127,7 @@
       ]
     },
     "fim_descanso": {
-      "text": "Zoe e Ted dormem um pouquinho debaixo da árvore e acordam já no quarto de Zoe.\nA porta mágica desapareceu, mas a lembrança da aventura ficou no coração deles.[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Zoe e Ted dormem um pouquinho debaixo da árvore e acordam já no quarto de Zoe.\nA porta mágica desapareceu, mas a lembrança da aventura ficou no coração deles.",
       "end": true
     }
   }

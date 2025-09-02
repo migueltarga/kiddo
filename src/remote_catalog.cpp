@@ -130,12 +130,34 @@ static bool indexContainsFile(const JsonDocument& doc, const String& file) {
             return false;
         }
         
+        // Find the entry for this file to get name and lang
+        Entry foundEntry;
+        bool entryFound = false;
+        for (const auto& entry : g_entries) {
+            if (entry.file == file) {
+                foundEntry = entry;
+                entryFound = true;
+                break;
+            }
+        }
+        
         String localPath = "/" + file;
         
+        // Check if file exists AND has content
+        bool fileExistsWithContent = false;
         if (FileSystem::exists(localPath)) {
+            String existingContent = FileSystem::readFile(localPath);
+            if (existingContent.length() > 0) {
+                fileExistsWithContent = true;
+            }
+        }
+        
+        if (fileExistsWithContent) {
             JsonDocument doc;
             if (!FileSystem::loadIndex(doc) || !indexContainsFile(doc, localPath)) {
-                FileSystem::addToIndex(localPath, "", "");
+                String name = entryFound ? foundEntry.name : "";
+                String lang = entryFound ? foundEntry.lang : "";
+                FileSystem::addToIndex(localPath, name, lang);
             }
             story::loadFromFS();
             return true;
@@ -171,7 +193,9 @@ static bool indexContainsFile(const JsonDocument& doc, const String& file) {
             }
         }
         
-        if (!FileSystem::addToIndex(localPath, "", "")) {
+        String name = entryFound ? foundEntry.name : "";
+        String lang = entryFound ? foundEntry.lang : "";
+        if (!FileSystem::addToIndex(localPath, name, lang)) {
             return false;
         }
         

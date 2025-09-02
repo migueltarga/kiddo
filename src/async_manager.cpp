@@ -74,7 +74,6 @@ static void workerTaskFunction(void* parameter) {
                     result.success = true;
                     strncpy(result.resultPath, storyId.c_str(), sizeof(result.resultPath) - 1);
                 } else {
-                    Serial.println("[ASYNC_MANAGER] Story download failed: " + url_str);
                     result.success = false;
                 }
             } else if (request.type == OP_FETCH_CATALOG) {

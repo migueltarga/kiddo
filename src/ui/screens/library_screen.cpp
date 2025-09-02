@@ -15,6 +15,7 @@
 #include "audio.h"
 #include "ui/components/ui_components.h"
 #include "ui/router.h"
+#include "story_utils.h"
 int g_story_idx = -1;
 String g_node_key;
 ui_story_home_cb_t g_home_cb = nullptr;
@@ -208,10 +209,7 @@ void ui_library_screen_show()
 		for (size_t i = 0; i < ents.size(); ++i)
 		{
 			const auto &ent = ents[i];
-			bool lang_match = false;
-			if (current_language == LANG_PT && ent.lang == "pt-br") lang_match = true;
-			if (current_language == LANG_EN && ent.lang == "en") lang_match = true;
-			if (!lang_match) continue;
+			if (!story_utils::matchesLanguage(current_language, ent.lang)) continue;
 			
 			String unique_key = ent.file + "|" + ent.lang;
 			if (shown_file_lang.count(unique_key)) continue;
@@ -221,13 +219,17 @@ void ui_library_screen_show()
 			
 			bool found_local = false;
 			String localPath = "/" + ent.file;
-			String payload = FileSystem::readFile(localPath);
-			if (payload.length() > 0) {
-				JsonDocument doc;
-				if (deserializeJson(doc, payload) == DeserializationError::Ok) {
-					String lang = doc["lang"].as<String>();
-					if (lang == ent.lang) {
-						found_local = true;
+			
+			// Check if file exists and is in the index with matching language
+			if (FileSystem::exists(localPath)) {
+				String payload = FileSystem::readFile(localPath);
+				if (payload.length() > 0) {
+					JsonDocument doc;
+					if (deserializeJson(doc, payload) == DeserializationError::Ok) {
+						String lang = doc["lang"].as<String>();
+						if (lang == ent.lang && FileSystem::indexContains(localPath)) {
+							found_local = true;
+						}
 					}
 				}
 			}

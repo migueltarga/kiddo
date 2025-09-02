@@ -20,22 +20,32 @@ namespace story
             JsonArray stories = indexDoc["stories"].as<JsonArray>();
             for (JsonObject story : stories) {
                 const char* f = story["file"] | "";
-                if (*f) indexedFiles.push_back(String(f));
+                if (*f) {
+                    indexedFiles.push_back(String(f));
+                }
             }
         }
         
         if (!indexedFiles.empty()) {
             for (const String& file : indexedFiles) {
-                if (!FileSystem::exists(file)) continue;
+                if (!FileSystem::exists(file)) {
+                    continue;
+                }
                 
                 String payload = FileSystem::readFile(file);
-                if (payload.length() == 0) continue;
+                if (payload.length() == 0) {
+                    continue;
+                }
                 
                 JsonDocument storyDoc;
-                if (deserializeJson(storyDoc, payload) != DeserializationError::Ok) continue;
+                if (deserializeJson(storyDoc, payload) != DeserializationError::Ok) {
+                    continue;
+                }
                 
                 String lang = storyDoc["lang"].as<String>();
-                if (!story_utils::matchesLanguage(current_language, lang)) continue;
+                if (!story_utils::matchesLanguage(current_language, lang)) {
+                    continue;
+                }
                 
                 Story_t st;
                 bool ok = parseStoryJson(payload, st);

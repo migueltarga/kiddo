@@ -133,7 +133,6 @@ void setup()
     
     AsyncManager::init();
     
-    story::ensureSampleStories();
     story::loadFromFS();
     ui_story_set_home_cb([]() { ui_router::show_home(); });
     ui_router::show_home();

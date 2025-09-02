@@ -153,7 +153,6 @@ String readFile(const String& path) {
 bool writeFile(const String& path, const String& content) {
     lv_fs_file_t file;
     if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_WR) != LV_FS_RES_OK) {
-        Serial.println("[FILE_SYSTEM] Failed to open file for writing: " + path);
         return false;
     }
     
@@ -162,8 +161,6 @@ bool writeFile(const String& path, const String& content) {
     lv_fs_close(&file);
     
     if (res != LV_FS_RES_OK || bytesWritten != content.length()) {
-        Serial.printf("[FILE_SYSTEM] Write failed: res=%d, written=%d, expected=%d\n", 
-                     res, bytesWritten, content.length());
         return false;
     }
     
@@ -195,7 +192,24 @@ String getCachedImagePath(const String& url) {
 }
 
 bool isImageCached(const String& url) {
-    return exists(getCachedImagePath(url));
+    String path = getCachedImagePath(url);
+    if (!exists(path)) {
+        return false;
+    }
+    
+    // Check if the cached image actually has content
+    lv_fs_file_t file;
+    if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_RD) != LV_FS_RES_OK) {
+        return false;
+    }
+    
+    uint32_t size;
+    lv_fs_seek(&file, 0, LV_FS_SEEK_END);
+    lv_fs_tell(&file, &size);
+    lv_fs_close(&file);
+    
+    // Consider cached only if file has content
+    return size > 0;
 }
 
 bool cacheImage(const String& url, const uint8_t* data, size_t size) {
@@ -241,14 +255,20 @@ bool saveIndex(const JsonDocument& doc) {
 
 bool indexContains(const String& file) {
     JsonDocument doc;
-    if (!loadIndex(doc)) return false;
+    if (!loadIndex(doc)) {
+        return false;
+    }
     
-    if (!doc["stories"].is<JsonArray>()) return false;
+    if (!doc["stories"].is<JsonArray>()) {
+        return false;
+    }
     
     JsonArrayConst stories = doc["stories"];
     for (JsonObjectConst story : stories) {
         const char* f = story["file"] | "";
-        if (file == f) return true;
+        if (file == f) {
+            return true;
+        }
     }
     return false;
 }
@@ -324,7 +344,6 @@ std::vector<String> listFiles(const String& directory) {
 
 bool httpGet(const String& url, String& response) {
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[FILE_SYSTEM] WiFi not connected");
         return false;
     }
     
@@ -340,7 +359,6 @@ bool httpGet(const String& url, String& response) {
         return true;
     }
     
-    Serial.printf("[FILE_SYSTEM] HTTP GET failed: %d\n", httpCode);
     http.end();
     return false;
 }

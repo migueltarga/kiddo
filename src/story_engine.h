@@ -11,8 +11,6 @@ namespace story
 
     void loadFromFS();
 
-    void ensureSampleStories();
-
     bool parseStoryJson(const String &json, Story_t &out);
 
     String normalizeText(const String &in);

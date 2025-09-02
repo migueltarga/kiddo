@@ -4,7 +4,7 @@
   "start": "start",
   "nodes": {
     "start": {
-      "text": "Zoe is 4 years old and loves playing with her teddy bear, Ted.\nOne starry night, she finds a magical door in the middle of her room.\nThe door glows and seems to be calling them.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/1.jpg[/img]Zoe is 4 years old and loves playing with her teddy bear, Ted.\nOne starry night, she finds a magical door in the middle of her room.\nThe door glows and seems to be calling them.",
       "choices": [
         {
           "text": "Enter the door",
@@ -13,7 +13,7 @@
       ]
     },
     "forest": {
-      "text": "Zoe holds Ted's hand tightly and walks through the door.\nSuddenly, they are in an enchanted forest full of colorful flowers and a sweet smell.\nTwo paths appear in front of them.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/2.jpg[/img]Zoe holds Ted's hand tightly and walks through the door.\nSuddenly, they are in an enchanted forest full of colorful flowers and a sweet smell.\nTwo paths appear in front of them.",
       "choices": [
         {
           "text": "Path of flowers",
@@ -26,7 +26,7 @@
       ]
     },
     "flowers": {
-      "text": "The path of flowers is soft and shiny.\nMany blue, red, and yellow butterflies fly everywhere.\nA giant butterfly lands in front of them and speaks with a gentle voice.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]The path of flowers is soft and shiny.\nMany blue, red, and yellow butterflies fly everywhere.\nA giant butterfly lands in front of them and speaks with a gentle voice.",
       "choices": [
         {
           "text": "Listen to butterfly",
@@ -35,7 +35,7 @@
       ]
     },
     "butterfly_talk": {
-      "text": "The butterfly smiles: 'Hello, Zoe and Ted! I know a secret place full of magic.\nDo you want me to take you there?'",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/4.jpg[/img]The butterfly smiles: 'Hello, Zoe and Ted! I know a secret place full of magic.\nDo you want me to take you there?'",
       "choices": [
         {
           "text": "Accept help",
@@ -48,7 +48,7 @@
       ]
     },
     "help_butterfly": {
-      "text": "The butterfly guides Zoe and Ted among the flowers until they reach a huge tree.\nInside it there is a golden chest.\nZoe opens the chest and finds many magical toys that move on their own and talk to her.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]The butterfly guides Zoe and Ted among the flowers until they reach a huge tree.\nInside it there is a golden chest.\nZoe opens the chest and finds many magical toys that move on their own and talk to her.",
       "choices": [
         {
           "text": "Play with toys",
@@ -57,11 +57,11 @@
       ]
     },
     "end_toys": {
-      "text": "Zoe and Ted play until they get tired, laughing a lot with the magical toys.\nWhen the sun begins to set, they return home happily, carrying memories of the enchanted forest.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe and Ted play until they get tired, laughing a lot with the magical toys.\nWhen the sun begins to set, they return home happily, carrying memories of the enchanted forest.",
       "end": true
     },
     "alone": {
-      "text": "Zoe and Ted decide to continue without help.\nThey follow a flowered trail until they find a calm lake full of colorful little fish.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/7.jpg[/img]Zoe and Ted decide to continue without help.\nThey follow a flowered trail until they find a calm lake full of colorful little fish.",
       "choices": [
         {
           "text": "Look at lake",
@@ -70,7 +70,7 @@
       ]
     },
     "lake": {
-      "text": "They sit by the lake, throw little stones in the water, and watch the circles forming.\nTed almost falls into the water and Zoe laughs a lot.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]They sit by the lake, throw little stones in the water, and watch the circles forming.\nTed almost falls into the water and Zoe laughs a lot.",
       "choices": [
         {
           "text": "Explore more",
@@ -79,11 +79,11 @@
       ]
     },
     "end_lake": {
-      "text": "After having fun at the lake, Zoe and Ted find a path back to the magical door.\nThey return to the room, happy with the adventure.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]After having fun at the lake, Zoe and Ted find a path back to the magical door.\nThey return to the room, happy with the adventure.",
       "end": true
     },
     "stones": {
-      "text": "The path of stones shines like stars on the ground.\nAt the end of the trail, a wooden bridge appears.\nIt is guarded by a talking frog.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/10.jpg[/img]The path of stones shines like stars on the ground.\nAt the end of the trail, a wooden bridge appears.\nIt is guarded by a talking frog.",
       "choices": [
         {
           "text": "Talk to frog",
@@ -105,7 +105,7 @@
       ]
     },
     "right_answer": {
-      "text": "Zoe answers: 'It is the ladder!' The frog smiles and lets them pass.\nOn the other side, there is a magical garden full of enchanted toys that dance by themselves.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/11.jpg[/img]Zoe answers: 'It is the ladder!' The frog smiles and lets them pass.\nOn the other side, there is a magical garden full of enchanted toys that dance by themselves.",
       "choices": [
         {
           "text": "Explore garden",
@@ -114,11 +114,11 @@
       ]
     },
     "end_garden": {
-      "text": "Zoe and Ted play in the enchanted garden until they get sleepy.\nWhen they return home, Ted dozes in Zoe's arms, who smiles happily after the adventure.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe and Ted play in the enchanted garden until they get sleepy.\nWhen they return home, Ted dozes in Zoe's arms, who smiles happily after the adventure.",
       "end": true
     },
     "wrong_answer": {
-      "text": "Ted answers: 'It is the cloud!' The frog laughs: 'That is not it!' Even so, he lets them rest under a nearby tree.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Ted answers: 'It is the cloud!' The frog laughs: 'That is not it!' Even so, he lets them rest under a nearby tree.",
       "choices": [
         {
           "text": "Rest",
@@ -127,7 +127,7 @@
       ]
     },
     "end_rest": {
-      "text": "Zoe and Ted nap a little under the tree and wake up already in Zoe's room.\nThe magical door disappeared, but the memory of the adventure stayed in their hearts.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Zoe and Ted nap a little under the tree and wake up already in Zoe's room.\nThe magical door disappeared, but the memory of the adventure stayed in their hearts.",
       "end": true
     }
   }
