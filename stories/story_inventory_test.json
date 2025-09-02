@@ -3,6 +3,26 @@
   "title": "The Magic Key Adventure",
   "start": "start",
   "has_inventory": true,
+  "item_definitions": [
+    {
+      "id": "golden_key",
+      "name": "Golden Key",
+      "description": "A shiny golden key that might open something important",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/key-6-128.jpg"
+    },
+    {
+      "id": "map",
+      "name": "Old Map",
+      "description": "An old treasure map with cryptic markings",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/map-128.jpg"
+    },
+    {
+      "id": "treasure",
+      "name": "Ancient Treasure",
+      "description": "A beautiful golden treasure chest",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/gold-128.jpg"
+    }
+  ],
   "initial_inventory": [
     {
       "id": "map",
