@@ -1,26 +1,29 @@
 #pragma once
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <vector>
 
-namespace story_utils 
+#include <ArduinoJson.h>
+#include <String.h>
+#include "i18n.h"
+
+namespace story_utils
 {
-    // Language filtering
-    bool matchesCurrentLanguage(const String& lang);
+    // Check if a language matches the current language setting
+    bool matchesLanguage(Language currentLang, const String& lang);
     
-    // Index.json management
+    // Check if content should be shown based on current language (with fallback for English)
+    bool shouldShowContent(const String& contentLang);
+    
+    // Convert current language to language string
+    String currentLanguageToString();
+    
+    // Load the story index
     bool loadIndex(JsonDocument& doc);
+    
+    // Save the story index
     bool saveIndex(const JsonDocument& doc);
+    
+    // Check if index contains a file
     bool indexContains(const String& file);
-    bool addToIndex(const String& file, const String& name = "", const String& lang = "");
-    bool removeFromIndex(const String& file);
-    std::vector<String> getIndexedFiles();
     
-    // Network utilities
-    bool isWiFiConnected();
-    
-    // JSON utilities
-    bool parseJsonSafely(const String& json, JsonDocument& doc);
-    bool hasStoriesArray(const JsonDocument& doc);
-    JsonArray getStoriesArray(JsonDocument& doc, bool createIfMissing = false);
+    // Add a file to the index
+    bool addToIndex(const String& file, const String& name, const String& lang);
 }

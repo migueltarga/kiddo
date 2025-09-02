@@ -5,6 +5,7 @@
 #include "styles.h"
 #include "remote_catalog.h"
 #include "story_engine.h"
+#include "file_system.h"
 #include "ui/components/ui_components.h"
 #include "ui/fonts.h"
 #include "audio.h"
@@ -348,7 +349,8 @@ void ui_settings_screen_show()
         config.confirm_color = lv_palette_main(LV_PALETTE_RED);
         config.confirm_text_color = lv_color_white();
         config.on_confirm = []() {
-            int removed = remote_catalog::clearDownloads();
+            FileSystem::clearAll();
+            story::loadFromFS();
             auto *s = S();
             
             lv_obj_t *toast = lv_obj_create(lv_scr_act());

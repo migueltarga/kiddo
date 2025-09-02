@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <vector>
 
-// Story engine data types
 
 struct Choice_t
 {

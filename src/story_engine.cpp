@@ -1,5 +1,5 @@
 #include "story_engine.h"
-#include "storage.h"
+#include "file_system.h"
 namespace story
 {
 
@@ -62,11 +62,9 @@ namespace story
         return cleaned;
     }
 
-    // --- Sample stories ---
     void ensureSampleStories()
     {
-        // Check if sample stories already exist
-        if (storage::exists("/story_sample.json") && storage::exists("/story_sample_pt.json")) {
+        if (FileSystem::exists("/story_sample.json") && FileSystem::exists("/story_sample_pt.json")) {
             return;
         }
         
@@ -83,11 +81,21 @@ namespace story
   "start":"start",
   "nodes":{
     "start": {
-      "text":"This is a sample story.",
+      "text":"This is a sample story with images!
+
+[img]https://via.placeholder.com/100x75.jpg[/img]
+
+Isn't this exciting? Here's another image:
+
+[img]https://via.placeholder.com/150x100.jpg[/img]",
       "choices":[{"text":"The End","next":"end"}]
     },
     "end": {
-      "text":"Thanks for reading!",
+      "text":"Thanks for reading!
+
+[img]https://via.placeholder.com/100x75.jpg[/img]
+
+Visit us again soon!",
       "end":true
     }
   }
@@ -99,18 +107,28 @@ namespace story
   "start":"start",
   "nodes":{
     "start": {
-      "text":"Esta é uma história exemplo.",
+      "text":"Esta é uma história exemplo com imagens!
+
+[img]https://www.iconsdb.com/icons/download/blue/info-48.jpg[/img]
+
+Não é fantástico? Aqui está outra imagem:
+
+[img]https://www.iconsdb.com/icons/download/blue/info-48.jpg[/img]",
       "choices":[{"text":"O Fim","next":"end"}]
     },
     "end": {
-      "text":"Obrigado por ler!",
+      "text":"Obrigado por ler!
+
+[img]https://www.iconsdb.com/icons/download/blue/info-48.jpg[/img]
+
+Volte em breve!",
       "end":true
     }
   }
 })JSON";
-        storage::writeStringToFile("/index.json", indexJson);
-        storage::writeStringToFile("/story_sample.json", sampleStory);
-        storage::writeStringToFile("/story_sample_pt.json", sampleStoryPt);
+        FileSystem::writeFile("/index.json", indexJson);
+        FileSystem::writeFile("/story_sample.json", sampleStory);
+        FileSystem::writeFile("/story_sample_pt.json", sampleStoryPt);
     }
 
 }

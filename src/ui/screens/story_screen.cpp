@@ -4,10 +4,14 @@
 #include "config.h"
 #include "i18n.h"
 #include "story_engine.h"
+#include "file_system.h"
+#include "async_manager.h"
+#include "image_display.h"
 #include "styles.h"
 #include "ui/components/ui_components.h"
 #include "ui/fonts.h"
 #include "ui_screens.h"
+#include "kiddo_parser.h"
 
 extern void ui_library_screen_show();
 extern void ui_story_set_home_cb(void (*cb)());
@@ -40,6 +44,7 @@ static lv_coord_t measure_text_width(const char *txt, const lv_font_t *font)
 	lv_txt_get_size(&sz, txt, font, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
 	return sz.x;
 }
+
 static bool should_wrap_choice(const String &text)
 {
 	const lv_coord_t max_line_width = 200;
@@ -88,14 +93,12 @@ static void show_node(const String &key)
 	lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
 	lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
 	
-	// Create header with back button and title
 	auto on_back_clicked = [](lv_event_t *e) { ui_library_screen_show(); };
 	ui_header_config_t config = ui_header_config_default(g_story->title.c_str(), on_back_clicked);
 	config.enable_marquee = true;
 	lv_obj_t *header = ui_header_create(scr, &config);
 	int header_h = 44;
 	
-	// Content area below header
 	lv_coord_t content_h = SCREEN_HEIGHT - header_h;
 	lv_obj_t *content = lv_obj_create(scr);
 	lv_obj_remove_style_all(content);
@@ -106,7 +109,6 @@ static void show_node(const String &key)
 	lv_obj_set_flex_flow(content, LV_FLEX_FLOW_COLUMN);
 	lv_obj_set_flex_align(content, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START,
 						  LV_FLEX_ALIGN_START);
-	// Text wrapper
 	lv_obj_t *text_wrap = lv_obj_create(content);
 	lv_obj_remove_style_all(text_wrap);
 	lv_obj_set_style_bg_opa(text_wrap, LV_OPA_TRANSP, 0);
@@ -121,12 +123,47 @@ static void show_node(const String &key)
 	lv_obj_set_flex_align(text_wrap, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START,
 						  LV_FLEX_ALIGN_START);
 	lv_obj_set_flex_grow(text_wrap, 1);
-	lv_obj_t *text = lv_label_create(text_wrap);
-	lv_label_set_long_mode(text, LV_LABEL_LONG_WRAP);
-	lv_obj_set_width(text, 228);
-	lv_label_set_text(text, n->text.c_str());
-	lv_obj_set_style_text_font(text, story_body_font(), 0);
-	lv_obj_set_style_text_color(text, lv_color_hex(0x000000), 0);
+	
+	KiddoParser::ParsedContent parsed = KiddoParser::parseText(n->text);
+	
+	for (const auto& segment : parsed.segments) {
+		if (segment.type == KiddoParser::ContentSegment::TEXT) {
+			if (segment.content.length() > 0) {
+				lv_obj_t *text_label = lv_label_create(text_wrap);
+				lv_label_set_long_mode(text_label, LV_LABEL_LONG_WRAP);
+				lv_obj_set_width(text_label, 228);
+				lv_label_set_text(text_label, segment.content.c_str());
+				lv_obj_set_style_text_font(text_label, story_body_font(), 0);
+				lv_obj_set_style_text_color(text_label, lv_color_hex(0x000000), 0);
+			}
+		} else if (segment.type == KiddoParser::ContentSegment::IMAGE) {
+			lv_obj_t *img_wrapper = lv_obj_create(text_wrap);
+			lv_obj_remove_style_all(img_wrapper);
+			lv_obj_set_style_bg_opa(img_wrapper, LV_OPA_TRANSP, 0);
+			lv_obj_set_width(img_wrapper, 228);
+			lv_obj_set_height(img_wrapper, 140);
+			lv_obj_set_style_pad_bottom(img_wrapper, 6, 0);
+			lv_obj_set_style_pad_top(img_wrapper, 3, 0);
+			lv_obj_set_style_pad_left(img_wrapper, 0, 0);
+			lv_obj_set_style_pad_right(img_wrapper, 0, 0);
+			lv_obj_set_scroll_dir(img_wrapper, LV_DIR_NONE);
+			lv_obj_set_flex_flow(img_wrapper, LV_FLEX_FLOW_COLUMN);
+			lv_obj_set_flex_align(img_wrapper, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+			
+			lv_obj_t *img = lv_img_create(img_wrapper);
+			lv_obj_set_width(img, 220);
+			lv_obj_set_height(img, 130);
+			lv_obj_set_style_pad_all(img, 0, 0);
+
+			ImageDisplay::createLoadingPlaceholder(img);
+
+			AsyncManager::loadImage(segment.content, img, [img](bool success, const String& cachedPath) {
+				if (success) {
+				} else {
+				}
+			});
+		}
+	}
 	lv_obj_t *choices = lv_obj_create(content);
 	lv_obj_remove_style_all(choices);
 	lv_obj_set_width(choices, 240);

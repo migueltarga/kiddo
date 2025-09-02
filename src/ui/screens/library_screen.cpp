@@ -4,18 +4,17 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 #include <set>
-#include <SPIFFS.h>
 #include "remote_catalog.h"
 #include "ui_screens.h"
 #include "styles.h"
 #include "ui/fonts.h"
 #include "story_engine.h"
 #include "config.h"
-#include "storage.h"
+#include "file_system.h"
+#include "async_manager.h"
 #include "audio.h"
 #include "ui/components/ui_components.h"
 #include "ui/router.h"
-// Global state variables
 int g_story_idx = -1;
 String g_node_key;
 ui_story_home_cb_t g_home_cb = nullptr;
@@ -29,27 +28,20 @@ String g_pending_download_file;
 int g_pending_download_idx = -1;
 lv_timer_t *g_download_timer = nullptr;
 
-#include "i18n.h" // Must be after externs for Language, S(), etc.
+#include "i18n.h"
 extern void ui_library_screen_refresh_for_language_change();
 extern void ui_library_screen_show();
 extern Language current_language;
 extern bool online_mode;
-#include "storage.h"
 #include "audio.h"
+
+static lv_obj_t* create_loading_overlay(lv_obj_t *parent, const char* message) {
+    ui_loading_overlay_config_t config = ui_loading_overlay_config_default(message);
+    return ui_loading_overlay_create(parent, &config);
+}
 static bool file_exists_strict(const String &path)
 {
-	if (!storage::exists(path.c_str()))
-	{
-		return false;
-	}
-	File f = SPIFFS.open(path.c_str(), "r");
-	if (!f)
-	{
-		return false;
-	}
-	size_t sz = f.size();
-	f.close();
-	return sz > 0;
+	return FileSystem::exists(path) && FileSystem::readFile(path).length() > 0;
 }
 
 static void library_fetch_timer_cb(lv_timer_t *t)
@@ -59,28 +51,30 @@ static void library_fetch_timer_cb(lv_timer_t *t)
 		return;
 	}
 	g_fetch_in_progress = true;
-	bool ok = remote_catalog::fetch();
-	g_remote_fetch_done = true;
-	g_remote_fetch_failed = !ok || remote_catalog::entries().empty();
-	g_fetch_in_progress = false;
-	// Remove fetch overlay if present
-	if (g_fetch_overlay)
-	{
-		lv_obj_del(g_fetch_overlay);
-		g_fetch_overlay = nullptr;
-	}
-	// Rebuild UI after fetch
-	story::loadFromFS();
-	ui_library_screen_show();
-	if (g_fetch_timer)
-	{
-		lv_timer_del(g_fetch_timer);
-		g_fetch_timer = nullptr;
-	}
+	
+	AsyncManager::fetchCatalog([](bool success) {
+		g_remote_fetch_done = true;
+		g_remote_fetch_failed = !success || remote_catalog::entries().empty();
+		g_fetch_in_progress = false;
+		
+		if (g_fetch_overlay)
+		{
+			lv_obj_del(g_fetch_overlay);
+			g_fetch_overlay = nullptr;
+		}
+		
+		story::loadFromFS();
+		ui_library_screen_show();
+		
+		if (g_fetch_timer)
+		{
+			lv_timer_del(g_fetch_timer);
+			g_fetch_timer = nullptr;
+		}
+	});
 }
 void ui_story_set_home_cb(ui_story_home_cb_t cb) { g_home_cb = cb; }
 
-// Back button callback for header component
 static void on_back_button_clicked(lv_event_t *e)
 {
 	ui_router::show_home();
@@ -110,29 +104,7 @@ static void on_remote_entry(lv_event_t *e)
 	if (!g_download_overlay)
 	{
 		lv_obj_t *scr = lv_scr_act();
-		g_download_overlay = lv_obj_create(scr);
-		lv_obj_remove_style_all(g_download_overlay);
-		lv_obj_set_size(g_download_overlay, LV_PCT(100), LV_PCT(100));
-		lv_obj_set_style_bg_color(g_download_overlay, lv_color_black(), 0);
-		lv_obj_set_style_bg_opa(g_download_overlay, LV_OPA_50, 0);
-		lv_obj_center(g_download_overlay);
-		lv_obj_add_flag(g_download_overlay, LV_OBJ_FLAG_CLICKABLE);
-		lv_obj_t *box = lv_obj_create(g_download_overlay);
-		lv_obj_set_size(box, 140, 100);
-		lv_obj_center(box);
-		lv_obj_set_style_bg_color(box, lv_palette_main(LV_PALETTE_ORANGE), 0);
-		lv_obj_set_style_bg_opa(box, LV_OPA_COVER, 0);
-		lv_obj_set_style_radius(box, 12, 0);
-		lv_obj_set_style_pad_all(box, 8, 0);
-		lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
-		lv_obj_t *spinner = lv_spinner_create(box);
-		lv_obj_set_size(spinner, 32, 32);
-		lv_obj_align(spinner, LV_ALIGN_TOP_MID, 0, 4);
-		lv_obj_t *lbl = lv_label_create(box);
-		lv_label_set_text(lbl, S()->loading);
-		lv_obj_set_style_text_font(lbl, font14(), 0);
-		lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
-		lv_obj_align(lbl, LV_ALIGN_BOTTOM_MID, 0, -4);
+		g_download_overlay = create_loading_overlay(scr, S()->loading);
 	}
 
 	if (g_download_timer)
@@ -141,63 +113,36 @@ static void on_remote_entry(lv_event_t *e)
 	}
 	else
 	{
-		g_download_timer = lv_timer_create([](lv_timer_t *t)
-										   {
-			if (g_pending_download_file.length() == 0) {
-				if (g_download_timer) {
-					lv_timer_del(g_download_timer);
-					g_download_timer = nullptr;
-				}
-				return;
-			}
-			String file = g_pending_download_file;
-			String storyId;
-			bool ok = remote_catalog::ensureDownloadedOrIndexed(file, &storyId);
-			if (g_download_overlay)
-			{
+		String file = g_pending_download_file;
+		g_pending_download_file.clear();
+		
+		AsyncManager::downloadStory(file, [](bool success, const String& storyId) {
+			if (g_download_overlay) {
 				lv_obj_del(g_download_overlay);
 				g_download_overlay = nullptr;
 			}
-			g_pending_download_file.clear();
-
-			if (!ok)
-			{
+			
+			if (!success) {
 				ui_splash_screen_show(S()->delete_failed);
-				lv_timer_create([](lv_timer_t *tt)
-								{
-									ui_library_screen_show();
-									lv_timer_del(tt);
-								},
-								800, nullptr);
-				if (g_download_timer) {
-					lv_timer_del(g_download_timer);
-					g_download_timer = nullptr;
-				}
+				lv_timer_create([](lv_timer_t *tt) {
+					ui_library_screen_show();
+					lv_timer_del(tt);
+				}, 800, nullptr);
 				return;
 			}
-			if (storyId.length())
-			{
+			
+			if (storyId.length()) {
 				story::loadFromFS();
 				const auto &stories = story::all();
-				for (const auto &st : stories)
-				{
-					if (st.id == storyId)
-					{
+				for (const auto &st : stories) {
+					if (st.id == storyId) {
 						ui_story_screen_show(st, st.start);
-						if (g_download_timer) {
-							lv_timer_del(g_download_timer);
-							g_download_timer = nullptr;
-						}
 						return;
 					}
 				}
 			}
 			ui_library_screen_show();
-			if (g_download_timer) {
-				lv_timer_del(g_download_timer);
-				g_download_timer = nullptr;
-			}
-		}, 25, nullptr);
+		});
 	}
 }
 
@@ -218,7 +163,6 @@ void ui_library_screen_show()
 	lv_obj_set_style_border_width(panel, 0, 0);
 	lv_obj_set_style_pad_all(panel, 0, 0);
 	
-	// Create header using component
 	ui_header_config_t header_config = ui_header_config_default(s->stories_title, on_back_button_clicked);
 	lv_obj_t *header = ui_header_create(scr, &header_config);
 	lv_obj_t *list = lv_obj_create(scr);
@@ -243,7 +187,6 @@ void ui_library_screen_show()
 	bool any_local = !storiesNow.empty();
 	bool any_remote = false;
 	
-	// Show local stories first
 	for (size_t i = 0; i < storiesNow.size(); ++i)
 	{
 		const Story_t &st = storiesNow[i];
@@ -259,38 +202,32 @@ void ui_library_screen_show()
 		lv_obj_center(lbl);
 	}
 	
-	// Only process remote catalog if online mode is enabled
 	if (online_mode) {
-		// Show remote catalog entries for download (if missing locally)
 		std::set<String> shown_file_lang;
 		
 		for (size_t i = 0; i < ents.size(); ++i)
 		{
 			const auto &ent = ents[i];
-			// Strictly filter by language BEFORE deduplication
 			bool lang_match = false;
 			if (current_language == LANG_PT && ent.lang == "pt-br") lang_match = true;
 			if (current_language == LANG_EN && ent.lang == "en") lang_match = true;
 			if (!lang_match) continue;
 			
 			String unique_key = ent.file + "|" + ent.lang;
-			if (shown_file_lang.count(unique_key)) continue; // Only one button per file+lang
+			if (shown_file_lang.count(unique_key)) continue;
 			
 			shown_file_lang.insert(unique_key);
 			String label = ent.name.length() ? ent.name : ent.file;
 			
-			// Check for a local story with matching file and language
 			bool found_local = false;
 			String localPath = "/" + ent.file;
-			if (file_exists_strict(localPath)) {
-				String payload = storage::readFileToString(localPath.c_str());
-				if (payload.length() > 0) {
-					JsonDocument doc;
-					if (deserializeJson(doc, payload) == DeserializationError::Ok) {
-						String lang = doc["lang"].as<String>();
-						if (lang == ent.lang) {
-							found_local = true;
-						}
+			String payload = FileSystem::readFile(localPath);
+			if (payload.length() > 0) {
+				JsonDocument doc;
+				if (deserializeJson(doc, payload) == DeserializationError::Ok) {
+					String lang = doc["lang"].as<String>();
+					if (lang == ent.lang) {
+						found_local = true;
 					}
 				}
 			}
@@ -312,7 +249,6 @@ void ui_library_screen_show()
 			}
 		}
 	} else {
-		// Clean up remote fetch state when online mode is disabled
 		g_remote_fetch_done = false;
 		g_remote_fetch_failed = false;
 		if (g_fetch_timer) {
@@ -361,29 +297,7 @@ void ui_library_screen_show()
 			// Full-screen overlay with spinner
 			if (!g_fetch_overlay)
 			{
-				g_fetch_overlay = lv_obj_create(scr);
-				lv_obj_remove_style_all(g_fetch_overlay);
-				lv_obj_set_size(g_fetch_overlay, LV_PCT(100), LV_PCT(100));
-				lv_obj_set_style_bg_color(g_fetch_overlay, lv_color_black(), 0);
-				lv_obj_set_style_bg_opa(g_fetch_overlay, LV_OPA_50, 0);
-				lv_obj_center(g_fetch_overlay);
-				lv_obj_add_flag(g_fetch_overlay, LV_OBJ_FLAG_CLICKABLE);
-				lv_obj_t *box = lv_obj_create(g_fetch_overlay);
-				lv_obj_set_size(box, 140, 100);
-				lv_obj_center(box);
-				lv_obj_set_style_bg_color(box, lv_palette_main(LV_PALETTE_ORANGE), 0);
-				lv_obj_set_style_bg_opa(box, LV_OPA_COVER, 0);
-				lv_obj_set_style_radius(box, 12, 0);
-				lv_obj_set_style_pad_all(box, 8, 0);
-				lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
-				lv_obj_t *spinner = lv_spinner_create(box);
-				lv_obj_set_size(spinner, 32, 32);
-				lv_obj_align(spinner, LV_ALIGN_TOP_MID, 0, 4);
-				lv_obj_t *lbl = lv_label_create(box);
-				lv_label_set_text(lbl, S()->loading);
-				lv_obj_set_style_text_font(lbl, font14(), 0);
-				lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
-				lv_obj_align(lbl, LV_ALIGN_BOTTOM_MID, 0, -4);
+				g_fetch_overlay = create_loading_overlay(scr, S()->loading);
 			}
 			if (!g_fetch_timer)
 			{

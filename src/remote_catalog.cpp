@@ -1,15 +1,12 @@
 #include "remote_catalog.h"
 #include "config.h"
-#include "net.h"
-#include "storage.h"
+#include "file_system.h"
 #include "story_engine.h"
-#include "story_utils.h"
 #include <ArduinoJson.h>
-#include <FS.h>
-#include <SPIFFS.h>
-#include <WiFi.h>
 #include "i18n.h"
+#include "story_utils.h"
 #include <Preferences.h>
+#include <WiFi.h>
 
 extern Preferences prefs;
 
@@ -20,7 +17,17 @@ namespace remote_catalog
     static Language g_last_fetch_lang;
     static bool g_last_ok = false;
     
-    String getCatalogUrl()
+    // Helper function to check if index contains a file
+static bool indexContainsFile(const JsonDocument& doc, const String& file) {
+    if (!doc["stories"].is<JsonArray>()) return false;
+    
+    JsonArrayConst stories = doc["stories"];
+    for (JsonObjectConst story : stories) {
+        const char* f = story["file"] | "";
+        if (file == f) return true;
+    }
+    return false;
+}    String getCatalogUrl()
     {
         String url = prefs.getString(PK_CATALOG_URL, REMOTE_CATALOG_URL);
         if (url.length() == 0) {
@@ -46,7 +53,7 @@ namespace remote_catalog
 
     bool fetch()
     {
-        if (!story_utils::isWiFiConnected()) {
+        if (WiFi.status() != WL_CONNECTED) {
             return false;
         }
         
@@ -59,12 +66,12 @@ namespace remote_catalog
         
         String url = getCatalogUrl();
         String payload;
-        if (!net::httpGet(url, payload)) {
+        if (!FileSystem::httpGet(url, payload)) {
             return false;
         }
         
         JsonDocument doc;
-        if (!story_utils::parseJsonSafely(payload, doc)) {
+        if (deserializeJson(doc, payload) != DeserializationError::Ok) {
             g_last_ok = false;
             return false;
         }
@@ -96,7 +103,7 @@ namespace remote_catalog
             
             ++total;
             
-            if (story_utils::matchesCurrentLanguage(e.lang)) {
+            if (story_utils::shouldShowContent(e.lang)) {
                 g_entries.push_back(e);
                 ++filtered;
             }
@@ -119,15 +126,16 @@ namespace remote_catalog
 
     bool ensureDownloadedOrIndexed(const String &file, String *outStoryId)
     {
-        if (!story_utils::isWiFiConnected()) {
+        if (WiFi.status() != WL_CONNECTED) {
             return false;
         }
         
         String localPath = "/" + file;
         
-        if (SPIFFS.exists(localPath)) {
-            if (!story_utils::indexContains(localPath)) {
-                story_utils::addToIndex(localPath);
+        if (FileSystem::exists(localPath)) {
+            JsonDocument doc;
+            if (!FileSystem::loadIndex(doc) || !indexContainsFile(doc, localPath)) {
+                FileSystem::addToIndex(localPath, "", "");
             }
             story::loadFromFS();
             return true;
@@ -137,17 +145,14 @@ namespace remote_catalog
         String url = base + file;
         
         String payload;
-        if (!net::httpGet(url, payload)) {
+        if (!FileSystem::httpGet(url, payload)) {
             return false;
         }
         
         JsonDocument doc;
-        if (story_utils::parseJsonSafely(payload, doc)) {
+        if (deserializeJson(doc, payload) == DeserializationError::Ok) {
             if (!doc["lang"].is<const char*>() || strlen(doc["lang"].as<const char*>()) == 0) {
-                String lang;
-                if (current_language == LANG_PT) lang = "pt-br";
-                else if (current_language == LANG_EN) lang = "en";
-                else lang = "en";
+                String lang = story_utils::currentLanguageToString();
                 doc["lang"] = lang;
                 String outPayload;
                 serializeJson(doc, outPayload);
@@ -155,18 +160,18 @@ namespace remote_catalog
             }
         }
         
-        if (!storage::writeStringToFile(localPath.c_str(), payload)) {
+        if (!FileSystem::writeFile(localPath, payload)) {
             return false;
         }
         
         if (outStoryId) {
             JsonDocument doc;
-            if (story_utils::parseJsonSafely(payload, doc)) {
+            if (deserializeJson(doc, payload) == DeserializationError::Ok) {
                 *outStoryId = doc["id"].as<const char *>();
             }
         }
         
-        if (!story_utils::addToIndex(localPath)) {
+        if (!FileSystem::addToIndex(localPath, "", "")) {
             return false;
         }
         
@@ -181,8 +186,8 @@ namespace remote_catalog
         
         for (const auto &ent : g_entries) {
             String localPath = "/" + ent.file;
-            if (SPIFFS.exists(localPath) && !story_utils::indexContains(localPath)) {
-                if (story_utils::addToIndex(localPath, ent.name, ent.lang)) {
+            if (FileSystem::exists(localPath) && !FileSystem::indexContains(localPath)) {
+                if (FileSystem::addToIndex(localPath, ent.name, ent.lang)) {
                     ++added;
                     any = true;
                 }
@@ -198,41 +203,8 @@ namespace remote_catalog
 
     int clearDownloads()
     {
-        int removed = 0;
-        
-        File root = SPIFFS.open("/");
-        if (root && root.isDirectory()) {
-            std::vector<String> filesToRemove;
-            File file = root.openNextFile();
-            while (file) {
-                if (!file.isDirectory()) {
-                    String filename = file.name();
-                    String filepath = file.path();
-                    if (filename.endsWith(".json") && filename != "/index.json" && filepath != "/index.json") {
-                        String normalizedPath = filepath.startsWith("/") ? filepath : ("/" + filepath);
-                        filesToRemove.push_back(normalizedPath);
-                    }
-                }
-                file.close();
-                file = root.openNextFile();
-            }
-            root.close();
-            
-            // Remove all found story files
-            for (const auto &path : filesToRemove) {
-                if (SPIFFS.exists(path)) {
-                    if (SPIFFS.remove(path)) {
-                        ++removed;
-                    }
-                }
-            }
-        }
-        
-        JsonDocument emptyIndex;
-        emptyIndex["stories"].to<JsonArray>();
-        story_utils::saveIndex(emptyIndex);
-        
+        FileSystem::clearStories();
         story::loadFromFS();
-        return removed;
+        return 1; // Return success indicator
     }
 }

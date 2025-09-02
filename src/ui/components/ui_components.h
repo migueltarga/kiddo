@@ -70,4 +70,17 @@ struct TextInputConfig {
 
 lv_obj_t* ui_text_input_dialog_show(const TextInputConfig& config);
 
+// Loading overlay component
+typedef struct {
+    const char* message;
+    lv_color_t box_color;
+    lv_color_t spinner_color;
+    lv_color_t text_color;
+    uint16_t box_width;
+    uint16_t box_height;
+} ui_loading_overlay_config_t;
+
+lv_obj_t* ui_loading_overlay_create(lv_obj_t* parent, const ui_loading_overlay_config_t* config);
+ui_loading_overlay_config_t ui_loading_overlay_config_default(const char* message);
+
 #endif // UI_COMPONENTS_H

@@ -1,10 +1,10 @@
 #include "story_engine.h"
-#include "story_utils.h"
+#include "file_system.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include "storage.h"
 #include "i18n.h"
+#include "story_utils.h"
 #include <Arduino.h>
 
 namespace story
@@ -14,20 +14,28 @@ namespace story
     {
         g_stories.clear();
         
-        std::vector<String> indexedFiles = story_utils::getIndexedFiles();
+        std::vector<String> indexedFiles;
+        JsonDocument indexDoc;
+        if (FileSystem::loadIndex(indexDoc)) {
+            JsonArray stories = indexDoc["stories"].as<JsonArray>();
+            for (JsonObject story : stories) {
+                const char* f = story["file"] | "";
+                if (*f) indexedFiles.push_back(String(f));
+            }
+        }
         
         if (!indexedFiles.empty()) {
             for (const String& file : indexedFiles) {
-                if (!SPIFFS.exists(file)) continue;
+                if (!FileSystem::exists(file)) continue;
                 
-                String payload = storage::readFileToString(file.c_str());
+                String payload = FileSystem::readFile(file);
                 if (payload.length() == 0) continue;
                 
                 JsonDocument storyDoc;
-                if (!story_utils::parseJsonSafely(payload, storyDoc)) continue;
+                if (deserializeJson(storyDoc, payload) != DeserializationError::Ok) continue;
                 
                 String lang = storyDoc["lang"].as<String>();
-                if (!story_utils::matchesCurrentLanguage(lang)) continue;
+                if (!story_utils::matchesLanguage(current_language, lang)) continue;
                 
                 Story_t st;
                 bool ok = parseStoryJson(payload, st);
@@ -57,12 +65,12 @@ namespace story
                         }
                         
                         if (!alreadyLoaded) {
-                            String content = storage::readFileToString(file.path());
+                            String content = FileSystem::readFile(file.path());
                             
                             JsonDocument storyDoc;
-                            if (story_utils::parseJsonSafely(content, storyDoc)) {
+                            if (deserializeJson(storyDoc, content) == DeserializationError::Ok) {
                                 String lang = storyDoc["lang"].as<String>();
-                                if (story_utils::matchesCurrentLanguage(lang)) {
+                                if (story_utils::matchesLanguage(current_language, lang)) {
                                     Story_t story;
                                     if (parseStoryJson(content, story)) {
                                         g_stories.push_back(story);

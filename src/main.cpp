@@ -4,17 +4,16 @@
 #include <TFT_eSPI.h>
 #include <XPT2046_Touchscreen.h>
 #include <Preferences.h>
-#include <SPIFFS.h>
 #include "config.h"
 #include "i18n.h"
-#include "storage.h"
+#include "file_system.h"
+#include "async_manager.h"
 #include "story_engine.h"
 #include "ui/screens/ui_screens.h"
 #include "ui/app_ui.h"
 #include "ui/fonts.h"
 #include "ui/router.h"
 #include "audio.h"
-#include "net.h"
 
 #if __has_include(<WiFi.h>)
 #include <WiFi.h>
@@ -26,11 +25,10 @@ uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 TFT_eSPI tft;
 Preferences prefs;
 uint8_t brightness = 200;
-uint8_t story_font_scale = 1; // 0=small,1=normal,2=large
+uint8_t story_font_scale = 1;
 bool online_mode = false;
 bool wifi_connected = false;
 
-// Touch driver
 static void touchscreen_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
     if (touchscreen.tirqTouched() && touchscreen.touched())
@@ -74,15 +72,15 @@ void setup()
     Serial.begin(115200);
     delay(50);
     
-    // FS - Initialize SPIFFS first
     SPIFFS.begin(true);
     
-    // Display
     tft.init();
     tft.setRotation(0);
     backlight_init();
-    // LVGL
     lv_init();
+    
+    FileSystem::init();
+    
     touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     touchscreen.begin(touchscreenSPI);
     touchscreen.setRotation(TOUCH_ROTATION);
@@ -94,9 +92,7 @@ void setup()
     lv_indev_set_display(indev, disp);
     lv_indev_set_read_cb(indev, touchscreen_read);
 
-    // Audio
     audio::init();
-    // Preferences
     prefs.begin(PNS, false);
     brightness = prefs.getUChar(PK_BRIGHTNESS, 200);
     current_language = (Language)prefs.getUInt(PK_LANG, LANG_EN);
@@ -104,14 +100,12 @@ void setup()
     online_mode = prefs.getBool(PK_ONLINE_MODE, false);
     backlight_write(brightness);
 
-    // Show splash screen
     ui_router::show_splash(S()->loading);
     for (int i = 0; i < 10; i++) {
         lv_timer_handler();
         delay(10);
     }
     
-    // WiFi - attempt auto-connect during splash screen
     WiFi.mode(WIFI_STA);
     WiFi.begin(); 
     
@@ -132,11 +126,13 @@ void setup()
         WiFi.mode(WIFI_OFF);
     }
 
-    // Continue initialization
     for (int i = 0; i < 5; i++) {
         lv_timer_handler();
         delay(10);
     }
+    
+    AsyncManager::init();
+    
     story::ensureSampleStories();
     story::loadFromFS();
     ui_story_set_home_cb([]() { ui_router::show_home(); });
@@ -147,6 +143,9 @@ void loop()
 {
     lv_timer_handler();
     audio::update();
+    
+    AsyncManager::process();
+    
     lv_tick_inc(5);
     delay(5);
 }
