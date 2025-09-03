@@ -1,3 +1,10 @@
+/**
+ * @file library_screen.cpp
+ * @brief Story library screen implementation
+ *
+ * This module provides the story library screen with story listing,
+ * download management, and navigation to individual stories.
+ */
 
 #include <Arduino.h>
 #include <lvgl.h>
@@ -16,17 +23,30 @@
 #include "ui/components/ui_components.h"
 #include "ui/router.h"
 #include "story_utils.h"
+
+/** @brief Current story index */
 int g_story_idx = -1;
+/** @brief Current node key */
 String g_node_key;
+/** @brief Home callback function */
 ui_story_home_cb_t g_home_cb = nullptr;
+/** @brief Remote fetch completion flag */
 bool g_remote_fetch_done = false;
+/** @brief Remote fetch failure flag */
 bool g_remote_fetch_failed = false;
+/** @brief Fetch in progress flag */
 bool g_fetch_in_progress = false;
+/** @brief Fetch timer */
 lv_timer_t *g_fetch_timer = nullptr;
+/** @brief Fetch overlay object */
 lv_obj_t *g_fetch_overlay = nullptr;
+/** @brief Download overlay object */
 lv_obj_t *g_download_overlay = nullptr;
+/** @brief Pending download filename */
 String g_pending_download_file;
+/** @brief Pending download index */
 int g_pending_download_idx = -1;
+/** @brief Download timer */
 lv_timer_t *g_download_timer = nullptr;
 
 #include "i18n.h"

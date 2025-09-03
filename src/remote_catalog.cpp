@@ -1,3 +1,12 @@
+/**
+ * @file remote_catalog.cpp
+ * @brief Remote story catalog management
+ *
+ * This module handles fetching and managing remote story catalogs,
+ * including downloading stories, reconciling with local content,
+ * and managing catalog URLs.
+ */
+
 #include "remote_catalog.h"
 #include "config.h"
 #include "file_system.h"
@@ -12,22 +21,37 @@ extern Preferences prefs;
 
 namespace remote_catalog
 {
+    /** @brief Cached catalog entries */
     static std::vector<Entry> g_entries;
+    /** @brief Last fetch timestamp */
     static uint32_t g_last_fetch_ms = 0;
+    /** @brief Language of last fetch */
     static Language g_last_fetch_lang;
+    /** @brief Last fetch success flag */
     static bool g_last_ok = false;
-    
-    // Helper function to check if index contains a file
-static bool indexContainsFile(const JsonDocument& doc, const String& file) {
-    if (!doc["stories"].is<JsonArray>()) return false;
-    
-    JsonArrayConst stories = doc["stories"];
-    for (JsonObjectConst story : stories) {
-        const char* f = story["file"] | "";
-        if (file == f) return true;
+
+    /**
+     * @brief Check if index contains a specific file
+     * @param doc JsonDocument containing index
+     * @param file Filename to check
+     * @return True if file is in index
+     */
+    static bool indexContainsFile(const JsonDocument& doc, const String& file) {
+        if (!doc["stories"].is<JsonArray>()) return false;
+
+        JsonArrayConst stories = doc["stories"];
+        for (JsonObjectConst story : stories) {
+            const char* f = story["file"] | "";
+            if (file == f) return true;
+        }
+        return false;
     }
-    return false;
-}    String getCatalogUrl()
+
+    /**
+     * @brief Get the current catalog URL
+     * @return Current catalog URL string
+     */
+    String getCatalogUrl()
     {
         String url = prefs.getString(PK_CATALOG_URL, REMOTE_CATALOG_URL);
         if (url.length() == 0) {

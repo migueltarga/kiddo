@@ -1,3 +1,12 @@
+/**
+ * @file settings_screen.cpp
+ * @brief Settings screen implementation
+ *
+ * This module provides the settings screen with controls for
+ * brightness, language, font size, WiFi management, and
+ * catalog configuration.
+ */
+
 #include "ui_screens.h"
 #include <Preferences.h>
 #include "config.h"
@@ -22,6 +31,10 @@ extern Language current_language;
 
 static lv_obj_t *settings_root = nullptr;
 
+/**
+ * @brief Close settings screen
+ * @param e LVGL event (unused)
+ */
 static void close_settings(lv_event_t *)
 {
     if (settings_root)

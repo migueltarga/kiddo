@@ -1,3 +1,12 @@
+/**
+ * @file main.cpp
+ * @brief Main application entry point for Kiddo story reader
+ *
+ * This file contains the main setup and loop functions for the ESP32-based
+ * story reader application. It initializes all subsystems including LVGL,
+ * touchscreen, WiFi, filesystem, and the UI components.
+ */
+
 #include <Arduino.h>
 
 #include <lvgl.h>
@@ -20,16 +29,30 @@
 #include <WiFi.h>
 #endif
 
+/** @brief Touchscreen SPI instance */
 SPIClass touchscreenSPI = SPIClass(VSPI);
+/** @brief Touchscreen driver instance */
 XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+/** @brief LVGL display buffer */
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+/** @brief TFT display driver */
 TFT_eSPI tft;
+/** @brief Preferences storage instance */
 Preferences prefs;
+/** @brief Current backlight brightness level */
 uint8_t brightness = 200;
+/** @brief Current story font scale setting */
 uint8_t story_font_scale = 1;
+/** @brief Online mode enabled flag */
 bool online_mode = false;
+/** @brief WiFi connection status */
 bool wifi_connected = false;
 
+/**
+ * @brief LVGL touchscreen read callback
+ * @param indev LVGL input device
+ * @param data Input data structure to fill
+ */
 static void touchscreen_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
     if (touchscreen.tirqTouched() && touchscreen.touched())

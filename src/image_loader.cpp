@@ -1,5 +1,15 @@
+/**
+ * @file image_loader.cpp
+ * @brief Asynchronous image loading system
+ *
+ * This module provides asynchronous image loading functionality
+ * using FreeRTOS tasks and queues. It handles downloading images
+ * from URLs, caching them, and displaying them in LVGL widgets.
+ */
+
 #include "image_loader.h"
 #include "file_system.h"
+#include "i18n.h"
 #include <SPIFFS.h>
 #include <JPEGDecoder.h>
 #include <lvgl.h>
@@ -9,22 +19,32 @@
 
 namespace ImageLoader {
 
+/** @brief Queue for image load requests */
 static QueueHandle_t load_queue = nullptr;
+/** @brief Queue for image load results */
 static QueueHandle_t result_queue = nullptr;
+/** @brief FreeRTOS task handle for loader */
 static TaskHandle_t loader_task = nullptr;
 
+/** @brief Structure for load operation results */
 struct LoadResult {
-    lv_obj_t* img_obj;
-    bool success;
-    char cached_path[256];
-    char error_message[64];
-    
+    lv_obj_t* img_obj;        /**< Target image object */
+    bool success;             /**< Success flag */
+    char cached_path[256];    /**< Path to cached image */
+    char error_message[64];   /**< Error message if failed */
+
+    /** @brief Default constructor */
     LoadResult() : img_obj(nullptr), success(false) {
         cached_path[0] = '\0';
         error_message[0] = '\0';
     }
 };
 
+/**
+ * @brief LVGL object delete event callback
+ * Cleans up resources when image object is deleted
+ * @param e LVGL event
+ */
 static void img_delete_event_cb(lv_event_t* e) {
     if (lv_event_get_code(e) == LV_EVENT_DELETE) {
         lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
@@ -51,7 +71,7 @@ static void create_loading_placeholder(lv_obj_t* img_obj) {
     lv_obj_set_style_pad_top(placeholder, 6, 0);
     
     lv_obj_t* label = lv_label_create(placeholder);
-    lv_label_set_text(label, "Loading\nImage...");
+    lv_label_set_text(label, S()->loading_image);
     lv_obj_set_style_text_color(label, lv_color_white(), 0);
     lv_obj_center(label);
     
@@ -262,7 +282,7 @@ void process() {
                 }
                 
                 lv_obj_t* error_label = lv_label_create(result.img_obj);
-                lv_label_set_text(error_label, "Decode\nFailed");
+                lv_label_set_text(error_label, S()->decode_failed);
                 lv_obj_set_style_text_color(error_label, lv_color_white(), 0);
                 lv_obj_center(error_label);
             }
@@ -274,7 +294,7 @@ void process() {
                     if (strlen(result.error_message) > 0) {
                         lv_label_set_text(label, result.error_message);
                     } else {
-                        lv_label_set_text(label, "Load\nFailed");
+                        lv_label_set_text(label, S()->load_failed);
                     }
                 }
             }

@@ -1,7 +1,18 @@
+/**
+ * @file i18n.cpp
+ * @brief Internationalization (i18n) system
+ *
+ * This module provides localized strings for the application,
+ * supporting English and Portuguese languages. It contains
+ * all user-facing text strings organized by language.
+ */
+
 #include "i18n.h"
 
+/** @brief Current application language */
 Language current_language = LANG_EN;
 
+/** @brief English localized strings */
 static const LocalizedStrings strings_en = {
     "Settings", "Brightness:", "Language:", "Close",
     "Reset Wi-Fi", "Reset",
@@ -54,7 +65,22 @@ static const LocalizedStrings strings_en = {
     "Catalog URL",
     "Enter the URL for your story catalog:\n\n(Leave empty to use default)",
     "Save",
-    "Default"
+    "Default",
+    // Story screen strings
+    "Leave Story",
+    "Are you sure you want to leave this story?\n\nYour progress will be lost.",
+    "Leave",
+    "Stay",
+    // Inventory strings
+    "Inventory",
+    "New Item!",
+    "You found a new item!",
+    "Item added to inventory.",
+    "Choose Item",
+    // Image loading strings
+    "Loading\nImage...",
+    "Decode\nFailed",
+    "Load\nFailed"
 };
 
 static const LocalizedStrings strings_pt = {
@@ -109,7 +135,22 @@ static const LocalizedStrings strings_pt = {
     "URL do Catálogo",
     "Digite a URL para seu catálogo de histórias:\n\n(Deixe vazio para usar o padrão)",
     "Salvar",
-    "Padrão"
+    "Padrão",
+    // Story screen strings
+    "Sair da História",
+    "Tem certeza que deseja sair desta história?\n\nSeu progresso será perdido.",
+    "Sair",
+    "Ficar",
+    // Inventory strings
+    "Inventário",
+    "Novo Item!",
+    "Você encontrou um novo item!",
+    "Item adicionado ao inventário.",
+    "Escolher Item",
+    // Image loading strings
+    "Carregando\nImagem...",
+    "Falha na\nDecodificação",
+    "Falha no\nCarregamento"
 };
 
 const LocalizedStrings *S()

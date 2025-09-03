@@ -1,3 +1,11 @@
+/**
+ * @file wifi_ssid_screen.cpp
+ * @brief WiFi SSID selection screen implementation
+ *
+ * This module provides the WiFi network selection screen with
+ * network scanning, signal strength display, and connection setup.
+ */
+
 #include "ui_screens.h"
 #include "ui/app_ui.h"
 #include "ui/fonts.h"
@@ -12,11 +20,12 @@
 #include <vector>
 #include <algorithm>
 
+/** @brief WiFi network information structure */
 struct WiFiNetworkInfo {
-    String ssid;
-    int32_t rssi;
-    wifi_auth_mode_t auth_mode;
-    bool is_open;
+    String ssid;                    /**< Network SSID */
+    int32_t rssi;                   /**< Signal strength (RSSI) */
+    wifi_auth_mode_t auth_mode;     /**< Authentication mode */
+    bool is_open;                   /**< Whether network is open */
 };
 
 static lv_obj_t *ssid_screen = nullptr;
@@ -27,6 +36,10 @@ static std::vector<WiFiNetworkInfo> networks;
 static String selected_ssid = "";
 static bool scanning = false;
 
+/**
+ * @brief Back button click handler
+ * @param e LVGL event
+ */
 static void ssid_back_clicked(lv_event_t *e);
 static void ssid_scan_clicked(lv_event_t *e);
 static void ssid_network_clicked(lv_event_t *e);

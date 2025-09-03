@@ -1,9 +1,23 @@
+/**
+ * @file image_display.cpp
+ * @brief Image display and JPEG decoding functionality
+ *
+ * This module handles JPEG image decoding and display using the
+ * JPEGDecoder library and LVGL canvas objects. It provides
+ * functionality to load and display images from SPIFFS.
+ */
+
 #include "image_display.h"
 #include <SPIFFS.h>
 #include <JPEGDecoder.h>
 
 namespace ImageDisplay {
 
+/**
+ * @brief LVGL object delete event callback
+ * Frees allocated image buffer when image object is deleted
+ * @param e LVGL event
+ */
 static void img_delete_event_cb(lv_event_t* e) {
     if (lv_event_get_code(e) == LV_EVENT_DELETE) {
         lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
@@ -15,6 +29,11 @@ static void img_delete_event_cb(lv_event_t* e) {
     }
 }
 
+/**
+ * @brief Create loading placeholder for image display
+ * Shows a spinner while image is loading
+ * @param img_obj Image object to create placeholder for
+ */
 void createLoadingPlaceholder(lv_obj_t* img_obj) {
     lv_obj_t* placeholder = lv_obj_create(lv_obj_get_parent(img_obj));
     lv_obj_set_size(placeholder, 220, 140);

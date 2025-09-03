@@ -1,7 +1,21 @@
+/**
+ * @file ui_loading_overlay.cpp
+ * @brief Loading overlay component implementation
+ *
+ * This module provides a loading overlay component with spinner
+ * and customizable text, colors, and sizing.
+ */
+
 #include "ui_components.h"
 #include "styles.h"
 #include "ui/fonts.h"
 
+/**
+ * @brief Create a loading overlay component
+ * @param parent Parent LVGL object
+ * @param config Loading overlay configuration
+ * @return Created overlay object
+ */
 lv_obj_t* ui_loading_overlay_create(lv_obj_t* parent, const ui_loading_overlay_config_t* config)
 {
     lv_obj_t *overlay = lv_obj_create(parent);

@@ -7,7 +7,7 @@
 #include "ui/fonts.h"
 #include "remote_catalog.h"
 #include "audio.h"
-#include "ui/images/image_background.h"
+#include "ui/images/images.h"
 #include "screens/ui_screens.h"
 
 extern Preferences prefs;

@@ -1,3 +1,13 @@
+/**
+ * @file async_manager.cpp
+ * @brief Asynchronous operations manager for background tasks
+ *
+ * This module handles asynchronous operations like image downloading,
+ * story downloading, and catalog fetching using FreeRTOS tasks and queues.
+ * It provides a clean interface for UI components to request background operations
+ * without blocking the main UI thread.
+ */
+
 #include "async_manager.h"
 #include "file_system.h"
 #include "image_display.h"
@@ -8,26 +18,29 @@
 
 namespace AsyncManager {
 
+/** @brief Operation types for async requests */
 enum OperationType {
-    OP_LOAD_IMAGE,
-    OP_DOWNLOAD_STORY,
-    OP_FETCH_CATALOG
+    OP_LOAD_IMAGE,      /**< Load image from URL */
+    OP_DOWNLOAD_STORY,  /**< Download story file */
+    OP_FETCH_CATALOG    /**< Fetch remote catalog */
 };
 
+/** @brief Structure for operation requests */
 struct OperationRequest {
-    OperationType type;
-    char url[256];
-    lv_obj_t* imgWidget;
-    ImageCallback imageCallback;
-    StoryCallback storyCallback;
-    CatalogCallback catalogCallback;
+    OperationType type;             /**< Type of operation */
+    char url[256];                  /**< URL for the operation */
+    lv_obj_t* imgWidget;            /**< Image widget for image operations */
+    ImageCallback imageCallback;    /**< Callback for image operations */
+    StoryCallback storyCallback;    /**< Callback for story operations */
+    CatalogCallback catalogCallback;/**< Callback for catalog operations */
 };
 
+/** @brief Structure for operation results */
 struct OperationResult {
-    OperationType type;
-    bool success;
-    char resultPath[128];
-    lv_obj_t* imgWidget;
+    OperationType type;     /**< Type of operation */
+    bool success;           /**< Success flag */
+    char resultPath[128];   /**< Result path or error message */
+    lv_obj_t* imgWidget;    /**< Image widget for image operations */
     ImageCallback imageCallback;
     StoryCallback storyCallback;
     CatalogCallback catalogCallback;

@@ -1,8 +1,22 @@
+/**
+ * @file text_input_dialog.cpp
+ * @brief Text input dialog component implementation
+ *
+ * This module provides a text input dialog with customizable
+ * title, description, initial text, and action buttons for
+ * text input operations.
+ */
+
 #include "ui_components.h"
 #include "../fonts.h"
 #include "styles.h"
 #include <lvgl.h>
 
+/**
+ * @brief Show text input dialog
+ * @param config Dialog configuration
+ * @return Created dialog object
+ */
 lv_obj_t* ui_text_input_dialog_show(const TextInputConfig& config) {
     // Create full-screen modal
     lv_obj_t *modal = lv_obj_create(lv_scr_act());

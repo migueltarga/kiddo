@@ -1,6 +1,6 @@
 {
   "id": "aventura_inventario",
-  "title": "A Aventura da Chave Mágica",
+  "title": "A Chave Mágica",
   "start": "inicio",
   "has_inventory": true,
   "item_definitions": [

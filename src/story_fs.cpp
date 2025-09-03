@@ -1,3 +1,12 @@
+/**
+ * @file story_fs.cpp
+ * @brief Story filesystem operations
+ *
+ * This module handles loading stories from the filesystem,
+ * managing the story index, and coordinating with the
+ * story engine for story discovery and loading.
+ */
+
 #include "story_engine.h"
 #include "file_system.h"
 #include <ArduinoJson.h>
@@ -10,6 +19,11 @@
 namespace story
 {
     extern std::vector<Story_t> g_stories;
+
+    /**
+     * @brief Load all stories from filesystem
+     * Scans the stories directory and loads all indexed story files
+     */
     void loadFromFS()
     {
         g_stories.clear();

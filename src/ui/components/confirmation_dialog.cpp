@@ -1,7 +1,20 @@
+/**
+ * @file confirmation_dialog.cpp
+ * @brief Confirmation dialog component implementation
+ *
+ * This module provides a confirmation dialog with customizable
+ * title, message, and action buttons for user confirmations.
+ */
+
 #include "ui_components.h"
 #include "../fonts.h"
 #include <lvgl.h>
 
+/**
+ * @brief Show confirmation dialog
+ * @param config Dialog configuration
+ * @return Created dialog object
+ */
 lv_obj_t* ui_confirmation_dialog_show(const ConfirmationConfig& config) {
     lv_obj_t *modal = lv_obj_create(lv_scr_act());
     lv_obj_set_size(modal, LV_PCT(90), LV_SIZE_CONTENT);

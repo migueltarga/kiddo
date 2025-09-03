@@ -1,3 +1,12 @@
+/**
+ * @file file_system.cpp
+ * @brief Filesystem operations and LVGL filesystem driver
+ *
+ * This module provides filesystem operations including file I/O,
+ * image caching, story management, and HTTP downloads. It also
+ * implements the LVGL filesystem driver for SPIFFS integration.
+ */
+
 #include "file_system.h"
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
@@ -7,14 +16,22 @@
 
 namespace FileSystem {
 
+/** @brief Filesystem initialization flag */
 static bool fs_initialized = false;
 
+/**
+ * @brief LVGL filesystem open callback
+ * @param drv LVGL filesystem driver
+ * @param path File path
+ * @param mode Open mode
+ * @return File handle or nullptr on error
+ */
 static void* fs_open(lv_fs_drv_t* drv, const char* path, lv_fs_mode_t mode) {
     const char* flags = "";
     if (mode == LV_FS_MODE_WR) flags = "w";
     else if (mode == LV_FS_MODE_RD) flags = "r";
     else if (mode == (LV_FS_MODE_WR | LV_FS_MODE_RD)) flags = "r+";
-    
+
     File* file = new File();
     *file = SPIFFS.open(path, flags);
     if (!*file) {
@@ -24,6 +41,12 @@ static void* fs_open(lv_fs_drv_t* drv, const char* path, lv_fs_mode_t mode) {
     return file;
 }
 
+/**
+ * @brief LVGL filesystem close callback
+ * @param drv LVGL filesystem driver
+ * @param file_p File handle
+ * @return LVGL filesystem result
+ */
 static lv_fs_res_t fs_close(lv_fs_drv_t* drv, void* file_p) {
     File* file = (File*)file_p;
     if (file) {

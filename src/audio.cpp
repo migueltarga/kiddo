@@ -1,3 +1,12 @@
+/**
+ * @file audio.cpp
+ * @brief Audio playback system using ESP32 DAC
+ *
+ * This module provides audio functionality for the application,
+ * including click sound generation and playback using the ESP32's
+ * built-in DAC (Digital-to-Analog Converter).
+ */
+
 #include "audio.h"
 #include <driver/dac.h>
 #include <Arduino.h>
@@ -15,10 +24,17 @@
 
 namespace
 {
+    /** @brief PCM data for click sound */
     std::vector<uint8_t> g_click_pcm;
+    /** @brief Current playback position in click sound */
     uint32_t g_click_pos = 0;
+    /** @brief Playback active flag */
     bool g_playing = false;
 
+    /**
+     * @brief Generate click sound PCM data
+     * Creates a short click sound using sine wave synthesis
+     */
     void generate_click()
     {
         const int samples = 200;

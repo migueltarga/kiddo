@@ -1,6 +1,20 @@
+/**
+ * @file ui_background.cpp
+ * @brief Background component implementation
+ *
+ * This module provides a background component that displays
+ * an image with automatic scaling and positioning.
+ */
+
 #include "ui_components.h"
 #include "config.h"
 
+/**
+ * @brief Create a background component
+ * @param parent Parent LVGL object
+ * @param config Background configuration
+ * @return Created background image object
+ */
 lv_obj_t *ui_background_create(lv_obj_t *parent, const ui_background_config_t *config)
 {
     // Set background color on parent

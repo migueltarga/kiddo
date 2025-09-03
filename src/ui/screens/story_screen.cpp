@@ -1,3 +1,12 @@
+/**
+ * @file story_screen.cpp
+ * @brief Story display screen implementation
+ *
+ * This module handles the story display screen, including text rendering,
+ * choice navigation, inventory management, and image display. It manages
+ * the main story reading experience and user interactions.
+ */
+
 #include <lvgl.h>
 
 #include "audio.h"
@@ -18,11 +27,28 @@
 extern void ui_library_screen_show();
 extern void ui_story_set_home_cb(void (*cb)());
 
+/**
+ * @brief Safe wrapper for library screen show
+ * Cleans up inventory UI before showing library
+ */
+static void safe_ui_library_screen_show() {
+	InventoryUI::cleanup();
+	ui_library_screen_show();
+}
+
 namespace
 {
+	/** @brief Current story node ID */
 	String g_current_node;
+	/** @brief Flag indicating if story progress has been made */
+	bool g_story_progress_made = false;
+	/** @brief Current story being displayed */
 	const Story_t *g_story = nullptr;
 	lv_obj_t *g_inventory_btn = nullptr;
+	
+	void onItemAdded(const InventoryItem_t& item) {
+		InventoryUI::notifyItemAdded(item, true);
+	}
 }
 
 extern uint8_t story_font_scale;
@@ -90,31 +116,61 @@ static void show_node(const String &key)
 		return;
 	}
 	g_current_node = key;
+	
+	if (g_story && key != g_story->start) {
+		g_story_progress_made = true;
+	}
+	
 	lv_obj_t *scr = lv_scr_act();
 	lv_obj_clean(scr);
 	const auto *s = S();
 	lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
 	lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
 	
-	auto on_back_clicked = [](lv_event_t *e) { ui_library_screen_show(); };
+	auto on_back_clicked = [](lv_event_t *e) { 
+		InventoryUI::cleanup();
+		
+		if (g_story_progress_made) {
+			const auto *s = S();
+			ConfirmationConfig config;
+			config.title = s->leave_story_title;
+			config.message = s->leave_story_message;
+			config.confirm_text = s->leave_story_confirm;
+			config.cancel_text = s->leave_story_cancel;
+			config.on_confirm = safe_ui_library_screen_show; // Use wrapper function
+			ui_confirmation_dialog_show(config);
+		} else {
+			safe_ui_library_screen_show();
+		}
+	};
 	ui_header_config_t config = ui_header_config_default(g_story->title.c_str(), on_back_clicked);
 	config.enable_marquee = true;
+	
 	lv_obj_t *header = ui_header_create(scr, &config);
 	int header_h = 44;
 	
-	// Add inventory button if story has inventory
 	g_inventory_btn = nullptr;
 	if (g_story->has_inventory) {
-		g_inventory_btn = InventoryUI::createInventoryButton(header, []() {
-			InventoryUI::showInventoryDialog();
-		});
-		lv_obj_align(g_inventory_btn, LV_ALIGN_RIGHT_MID, -50, 0); // Position left of back button
+		g_inventory_btn = InventoryUI::createInventoryButton(header);
+		
+		lv_obj_remove_flag(g_inventory_btn, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+		lv_obj_set_pos(g_inventory_btn, 240 - 32 - 6, (38 - 32) / 2); // x = header_width - button_width - padding, y = centered
+		
+		lv_obj_t *title_label = (lv_obj_t *)lv_obj_get_user_data(header);
+		if (title_label) {
+			lv_obj_set_width(title_label, 150); // Increased from 130 to 160 for better layout
+		}
 	}
 	
-	// Process any inventory actions for this node
 	if (g_story->has_inventory && n->gives_item.length() > 0) {
-		// Add item to inventory (we'll need to define item properties somewhere)
-		InventoryManager::getCurrentInventory().addItem(n->gives_item, n->gives_item, "");
+		const ItemDefinition_t* item_def = g_story->getItemDefinition(n->gives_item);
+		if (item_def) {
+			InventoryItem_t item(item_def->id, item_def->name, item_def->icon_url);
+			InventoryManager::getCurrentInventory().addItem(item, true); // Enable notifications
+		} else {
+			InventoryItem_t basic_item(n->gives_item, n->gives_item, "");
+			InventoryManager::getCurrentInventory().addItem(basic_item, true);
+		}
 	}
 	
 	lv_coord_t content_h = SCREEN_HEIGHT - header_h;
@@ -272,8 +328,9 @@ static void show_node(const String &key)
 			struct ChoiceData {
 				String next;
 				String gives_item;
+				String required_item;
 			};
-			ChoiceData* choice_data = new ChoiceData{ch.next, ch.gives_item};
+			ChoiceData* choice_data = new ChoiceData{ch.next, ch.gives_item, ch.required_item};
 			
 			if (!is_disabled) {
 				lv_obj_add_event_cb(
@@ -283,10 +340,9 @@ static void show_node(const String &key)
 						ChoiceData* data = (ChoiceData*)lv_event_get_user_data(e);
 						if (!data)
 							return;
-						
-						// Handle inventory actions
-						if (g_story->has_inventory && data->gives_item.length() > 0) {
-							InventoryManager::getCurrentInventory().addItem(data->gives_item, data->gives_item, "");
+
+						if (g_story->has_inventory && data->required_item.length() > 0) {
+							bool removed = InventoryManager::getCurrentInventory().removeItem(data->required_item);
 						}
 						
 						String key = data->next;
@@ -307,6 +363,60 @@ static void show_node(const String &key)
 			lv_obj_center(l);
 		}
 	}
+	
+	if (n->inventory_choice && g_story->has_inventory) {
+		Serial.println("Displaying inventory choice dialog");
+		
+		lv_obj_t *inv_btn = lv_btn_create(choices);
+		ui_add_click_sound(inv_btn);
+		lv_obj_set_width(inv_btn, LV_PCT(100));
+		lv_obj_set_height(inv_btn, 34);
+		apply_primary_button_style(inv_btn);
+		
+		struct InventoryChoiceData {
+			String correct_item;
+			String success_next;
+			String failure_next;
+		};
+		InventoryChoiceData* inv_data = new InventoryChoiceData{n->correct_item, n->success_next, n->failure_next};
+		
+		lv_obj_add_event_cb(inv_btn, [](lv_event_t *e) {
+			InventoryChoiceData* data = (InventoryChoiceData*)lv_event_get_user_data(e);
+			if (!data) return;
+			
+			InventoryUI::InventoryDialogConfig config;
+			config.title = "Choose Item";
+			config.show_for_choice = true;
+			config.choice_callback = [data](const InventoryItem_t& selected_item) {
+				Serial.printf("Inventory choice made: %s (correct: %s)\n", selected_item.id.c_str(), data->correct_item.c_str());
+				
+				String next_node;
+				if (selected_item.id == data->correct_item) {
+					Serial.println("Correct item chosen!");
+					next_node = data->success_next;
+				} else {
+					Serial.println("Wrong item chosen!");
+					next_node = data->failure_next;
+				}
+				
+				// Remove the chosen item from inventory
+				InventoryManager::getCurrentInventory().removeItem(selected_item.id);
+				
+				// Navigate to next node
+				show_node(next_node);
+				
+				// Clean up
+				delete data;
+			};
+			InventoryUI::showInventoryDialog(config);
+		}, LV_EVENT_CLICKED, inv_data);
+		
+		lv_obj_t *inv_label = lv_label_create(inv_btn);
+		lv_label_set_text(inv_label, S()->choose_item);
+		lv_obj_set_style_text_font(inv_label, story_body_font(), 0);
+		lv_obj_center(inv_label);
+	}
+	
 	uint32_t choice_cnt = lv_obj_get_child_cnt(choices);
 	int base_pad = 6;
 	int row_space = 6;
@@ -318,18 +428,28 @@ static void show_node(const String &key)
 	int max_compact_two =
 		base_pad * 2 +
 		(btn_h * 2 + row_space);
-	int max_cap = 110;
+	int max_cap = 120;
+	
 	if (choice_cnt <= 2)
 	{
 		lv_obj_set_height(choices, desired);
 		lv_obj_clear_flag(choices, LV_OBJ_FLAG_SCROLLABLE);
 	}
+	else if (choice_cnt == 3)
+	{
+		int three_choice_height = base_pad * 2 + (btn_h * 3 + row_space * 2);
+		if (three_choice_height <= max_cap + 10) {
+			lv_obj_set_height(choices, three_choice_height);
+			lv_obj_clear_flag(choices, LV_OBJ_FLAG_SCROLLABLE);
+		} else {
+			lv_obj_set_height(choices, max_cap);
+			lv_obj_set_scroll_dir(choices, LV_DIR_VER);
+			lv_obj_add_flag(choices, LV_OBJ_FLAG_SCROLLABLE);
+		}
+	}
 	else
 	{
-		int capped = desired;
-		if (capped > max_cap)
-			capped = max_cap;
-		lv_obj_set_height(choices, capped);
+		lv_obj_set_height(choices, max_cap);
 		lv_obj_set_scroll_dir(choices, LV_DIR_VER);
 		lv_obj_add_flag(choices, LV_OBJ_FLAG_SCROLLABLE);
 	}
@@ -340,9 +460,11 @@ void ui_story_screen_show(const Story_t &st, const String &nodeKey)
 {
 	g_story = &st;
 	
-	// Initialize inventory if the story has one
+	g_story_progress_made = false;
+	
 	if (g_story->has_inventory) {
 		InventoryManager::getCurrentInventory().initialize(g_story->initial_inventory);
+		InventoryManager::getCurrentInventory().setNotificationCallback(onItemAdded);
 	}
 	
 	show_node(nodeKey);

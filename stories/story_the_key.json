@@ -1,6 +1,6 @@
 {
   "id": "inventory_adventure",
-  "title": "The Magic Key Adventure",
+  "title": "The Magic Key",
   "start": "start",
   "has_inventory": true,
   "item_definitions": [

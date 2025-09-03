@@ -1,8 +1,22 @@
+/**
+ * @file ui_header.cpp
+ * @brief Header component implementation
+ *
+ * This module provides a reusable header component with optional
+ * back button, title text, and marquee scrolling functionality.
+ */
+
 #include "ui_components.h"
 #include "styles.h"
 #include "ui/fonts.h"
 #include "audio.h"
 
+/**
+ * @brief Create a header component
+ * @param parent Parent LVGL object
+ * @param config Header configuration
+ * @return Created header object
+ */
 lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
 {
     // Create header container
