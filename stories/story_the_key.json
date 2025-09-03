@@ -1,0 +1,154 @@
+{
+  "id": "inventory_adventure",
+  "title": "The Magic Key Adventure",
+  "start": "start",
+  "has_inventory": true,
+  "item_definitions": [
+    {
+      "id": "golden_key",
+      "name": "Golden Key",
+      "description": "A shiny golden key that might open something important",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/key-6-128.jpg",
+      "local_icon": "key"
+    },
+    {
+      "id": "map",
+      "name": "Old Map",
+      "description": "An old treasure map with cryptic markings",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/map-128.jpg",
+      "local_icon": "old_map"
+    },
+    {
+      "id": "treasure",
+      "name": "Ancient Treasure",
+      "description": "A beautiful golden treasure chest",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/gold-128.jpg",
+      "local_icon": "chest"
+    },
+    {
+      "id": "magic_potion",
+      "name": "Magic Potion",
+      "description": "A glowing potion that restores your strength or reveals secrets",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/bottle-128.jpg",
+      "local_icon": "potion"
+    },
+    {
+      "id": "sword",
+      "name": "Rusty Sword",
+      "description": "An old but sturdy sword, useful for protection",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/sword-128.jpg",
+      "local_icon": "sword"
+    }
+  ],
+  "initial_inventory": [
+    {
+      "id": "map"
+    }
+  ],
+  "nodes": {
+    "start": {
+      "text": "You wake up in a mysterious forest with only an old map in your backpack.\nThe air is damp, and you hear birds singing in the distance.\nThere are two paths ahead of you.",
+      "choices": [
+        { "text": "Take the left path", "next": "left_path" },
+        { "text": "Take the right path", "next": "right_path" },
+        { "text": "Check your map first", "next": "check_map", "required_item": "map" }
+      ]
+    },
+    "check_map": {
+      "text": "You look at your old map. It shows a secret passage to the right, hidden by thick bushes.\nThe markings are faint, but the map seems trustworthy.",
+      "choices": [
+        { "text": "Follow the secret passage", "next": "secret_passage" },
+        { "text": "Ignore the map and go left", "next": "left_path" }
+      ]
+    },
+    "left_path": {
+      "text": "You walk down the left path. Moss covers the stones, and the air grows colder.\nAfter some steps, you find a shiny golden key on the ground.\nFurther ahead, you spot a rusty sword stuck in a tree trunk.",
+      "gives_item": "golden_key",
+      "choices": [
+        { "text": "Take the sword", "next": "take_sword" },
+        { "text": "Continue forward without sword", "next": "locked_door" }
+      ]
+    },
+    "take_sword": {
+      "text": "You pull out the rusty sword. It feels heavy but reliable.\nIn the distance, you hear faint growls as if something is watching you.",
+      "gives_item": "sword",
+      "choices": [
+        { "text": "Continue forward", "next": "locked_door" }
+      ]
+    },
+    "right_path": {
+      "text": "You walk down the right path. The ground crunches with dry leaves under your feet.\nAt the end of the trail, you see a locked door carved into a stone wall.\nBeside the door, a small glowing potion sits on a rock, humming with faint energy.",
+      "gives_item": "magic_potion",
+      "choices": [
+        { "text": "Try to open the door", "next": "try_door" },
+        { "text": "Go back", "next": "start" }
+      ]
+    },
+    "secret_passage": {
+      "text": "Pushing through thick bushes, you find a hidden tunnel. The air inside is damp and echoes with whispers.\nAt the end of the tunnel lies a treasure chamber.\nBut before you can reach it, a shadowy guardian blocks the way, glowing red eyes staring at you.",
+      "choices": [
+        { "text": "Open inventory", "next": "guardian_inventory" },
+        { "text": "Run away", "next": "start" }
+      ]
+    },
+    "guardian_inventory": {
+      "text": "Select an item from your inventory to face the guardian.",
+      "inventory_choice": true,
+      "correct_item": "sword",
+      "success_next": "fight_guardian",
+      "failure_next": "failure"
+    },
+    "fight_guardian": {
+      "text": "You swing the sword bravely. Sparks fly as the guardian clashes with you.\nWith a final strike, the guardian vanishes into smoke.\nThe chamber is silent now, and in the center lies a treasure chest.",
+      "gives_item": "treasure",
+      "choices": [
+        { "text": "Take the treasure and leave", "next": "victory_with_treasure" }
+      ]
+    },
+    "try_door": {
+      "text": "The door is locked tight. Strange symbols glow on its surface.\nIt seems to react to magical or special items.",
+      "choices": [
+        { "text": "Open inventory", "next": "door_inventory" },
+        { "text": "Look for another way", "next": "left_path" },
+        { "text": "Go back to start", "next": "start" }
+      ]
+    },
+    "door_inventory": {
+      "text": "Select an item from your inventory to try on the door.",
+      "inventory_choice": true,
+      "correct_item": "golden_key",
+      "success_next": "unlock_door",
+      "failure_next": "failure"
+    },
+    "locked_door": {
+      "text": "You arrive at the same locked door, carved with glowing runes.\nNow that you have more items, you may be able to open it.",
+      "choices": [
+        { "text": "Open inventory", "next": "door_inventory" },
+        { "text": "Go back", "next": "start" }
+      ]
+    },
+    "unlock_door": {
+      "text": "The golden key fits perfectly, and the runes on the door glow brighter.\nThe heavy stone door opens slowly, revealing a beautiful garden.\nIn the center stands a fountain radiating magical energy.",
+      "choices": [
+        { "text": "Drink from the fountain", "next": "fountain_magic" },
+        { "text": "Rest in the garden", "next": "garden" }
+      ]
+    },
+    "fountain_magic": {
+      "text": "You drink from the fountain. Its water fills you with light.\nYour wounds heal, your spirit rises, and you feel eternal happiness.\nThe treasure in your heart is joy itself.",
+      "end": true
+    },
+    "garden": {
+      "text": "You step into a magical garden filled with singing flowers and dancing butterflies.\nThe air smells sweet, and the sky above is full of shimmering light.\nYou realize you have found paradise.",
+      "end": true
+    },
+    "victory_with_treasure": {
+      "text": "You escape through the secret tunnel carrying the ancient treasure.\nLegends will be told of your courage, and your name will be remembered.\nYou are rich, safe, and victorious!",
+      "end": true
+    },
+    "failure": {
+      "text": "The item you used was wrong. The air trembles as magic backfires.\nThe object crumbles to dust in your hands, and the path collapses around you.\nYour adventure ends here.",
+      "end": true
+    }
+  }
+}

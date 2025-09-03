@@ -1,0 +1,149 @@
+{
+  "id": "aventura_inventario",
+  "title": "A Aventura da Chave Mágica",
+  "start": "inicio",
+  "has_inventory": true,
+  "item_definitions": [
+    {
+      "id": "golden_key",
+      "name": "Chave Dourada",
+      "description": "Uma chave dourada brilhante que pode abrir algo importante",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/key-6-128.jpg"
+    },
+    {
+      "id": "map",
+      "name": "Mapa Antigo",
+      "description": "Um mapa de tesouro antigo com marcas enigmáticas",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/map-128.jpg"
+    },
+    {
+      "id": "treasure",
+      "name": "Tesouro Antigo",
+      "description": "Um belo baú de tesouro dourado",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/gold-128.jpg"
+    },
+    {
+      "id": "magic_potion",
+      "name": "Poção Mágica",
+      "description": "Uma poção brilhante que restaura forças ou revela segredos",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/bottle-128.jpg"
+    },
+    {
+      "id": "sword",
+      "name": "Espada Enferrujada",
+      "description": "Uma espada antiga mas resistente, útil para proteção",
+      "icon_url": "https://www.iconsdb.com/icons/download/black/sword-128.jpg"
+    }
+  ],
+  "initial_inventory": [
+    {
+      "id": "map"
+    }
+  ],
+  "nodes": {
+    "inicio": {
+      "text": "Você acorda em uma floresta misteriosa com apenas um mapa antigo em sua mochila.\nO ar é úmido e você ouve pássaros cantando ao longe.\nExistem dois caminhos à sua frente.",
+      "choices": [
+        { "text": "Seguir pelo caminho da esquerda", "next": "caminho_esquerda" },
+        { "text": "Seguir pelo caminho da direita", "next": "caminho_direita" },
+        { "text": "Olhar o mapa primeiro", "next": "ver_mapa", "required_item": "map" }
+      ]
+    },
+    "ver_mapa": {
+      "text": "Você olha o mapa antigo. Ele mostra uma passagem secreta à direita, escondida por arbustos.\nAs marcas são fracas, mas o mapa parece confiável.",
+      "choices": [
+        { "text": "Seguir a passagem secreta", "next": "passagem_secreta" },
+        { "text": "Ignorar o mapa e ir à esquerda", "next": "caminho_esquerda" }
+      ]
+    },
+    "caminho_esquerda": {
+      "text": "Você segue pelo caminho da esquerda. O chão está coberto de musgo e o ar fica mais frio.\nLogo à frente, você encontra uma chave dourada brilhante no chão.\nUm pouco mais adiante, uma espada enferrujada está presa em um tronco.",
+      "gives_item": "golden_key",
+      "choices": [
+        { "text": "Pegar a espada", "next": "pegar_espada" },
+        { "text": "Seguir em frente sem espada", "next": "porta_trancada" }
+      ]
+    },
+    "pegar_espada": {
+      "text": "Você puxa a espada enferrujada. Ela é pesada, mas parece resistente.\nAo fundo, você escuta rosnados fracos, como se algo o observasse.",
+      "gives_item": "sword",
+      "choices": [
+        { "text": "Seguir em frente", "next": "porta_trancada" }
+      ]
+    },
+    "caminho_direita": {
+      "text": "Você segue pelo caminho da direita. O chão estala com folhas secas.\nNo fim da trilha, há uma porta trancada esculpida em pedra.\nAo lado da porta, uma poção brilhante repousa sobre uma pedra, emitindo energia suave.",
+      "gives_item": "magic_potion",
+      "choices": [
+        { "text": "Tentar abrir a porta", "next": "tentar_porta" },
+        { "text": "Voltar", "next": "inicio" }
+      ]
+    },
+    "passagem_secreta": {
+      "text": "Empurrando os arbustos, você encontra um túnel escondido. O ar é úmido e ecoa com sussurros.\nNo fim do túnel, há uma câmara do tesouro.\nMas um guardião sombrio bloqueia a passagem, com olhos vermelhos brilhantes.",
+      "choices": [
+        { "text": "Abrir inventário", "next": "inventario_guardiao" },
+        { "text": "Fugir", "next": "inicio" }
+      ]
+    },
+    "inventario_guardiao": {
+      "text": "Selecione um item do inventário para enfrentar o guardião.",
+      "inventory_choice": true,
+      "correct_item": "sword",
+      "success_next": "derrotar_guardiao",
+      "failure_next": "falha"
+    },
+    "derrotar_guardiao": {
+      "text": "Você ergue a espada e ataca com coragem. Faíscas voam quando o guardião reage.\nCom um golpe final, ele se desfaz em fumaça.\nNo centro da sala, repousa um baú de tesouro.",
+      "gives_item": "treasure",
+      "choices": [
+        { "text": "Pegar o tesouro e sair", "next": "vitoria_tesouro" }
+      ]
+    },
+    "tentar_porta": {
+      "text": "A porta está firmemente trancada. Símbolos estranhos brilham na sua superfície.\nEla parece reagir apenas a itens especiais.",
+      "choices": [
+        { "text": "Abrir inventário", "next": "inventario_porta" },
+        { "text": "Procurar outro caminho", "next": "caminho_esquerda" },
+        { "text": "Voltar ao início", "next": "inicio" }
+      ]
+    },
+    "inventario_porta": {
+      "text": "Selecione um item do inventário para tentar abrir a porta.",
+      "inventory_choice": true,
+      "correct_item": "golden_key",
+      "success_next": "abrir_porta",
+      "failure_next": "falha"
+    },
+    "porta_trancada": {
+      "text": "Você chega diante da mesma porta esculpida em pedra, coberta por runas brilhantes.\nTalvez agora você tenha o item necessário para abri-la.",
+      "choices": [
+        { "text": "Abrir inventário", "next": "inventario_porta" },
+        { "text": "Voltar", "next": "inicio" }
+      ]
+    },
+    "abrir_porta": {
+      "text": "A chave dourada se encaixa perfeitamente, e as runas brilham intensamente.\nA porta pesada se abre lentamente, revelando um lindo jardim.\nNo centro, há uma fonte que irradia energia mágica.",
+      "choices": [
+        { "text": "Beber da fonte", "next": "fonte_magica" },
+        { "text": "Descansar no jardim", "next": "jardim" }
+      ]
+    },
+    "fonte_magica": {
+      "text": "Você bebe da fonte. A água preenche seu corpo de luz.\nSeus ferimentos somem, sua alma se eleva e você sente felicidade eterna.\nO verdadeiro tesouro está em seu coração.",
+      "end": true
+    },
+    "jardim": {
+      "text": "Você entra em um jardim mágico cheio de flores que cantam e borboletas que dançam.\nO ar é doce, e o céu acima brilha como cristal.\nVocê percebe que encontrou o paraíso.",
+      "end": true
+    },
+    "vitoria_tesouro": {
+      "text": "Você escapa pelo túnel secreto carregando o tesouro antigo.\nLendas serão contadas sobre sua coragem e seu nome será lembrado.\nVocê está rico, seguro e vitorioso!",
+      "end": true
+    },
+    "falha": {
+      "text": "O item usado estava errado. A magia reage violentamente.\nO objeto se desfaz em pó nas suas mãos e o caminho desmorona.\nSua aventura termina aqui.",
+      "end": true
+    }
+  }
+}
