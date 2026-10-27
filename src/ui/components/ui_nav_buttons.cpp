@@ -1,8 +1,21 @@
+/**
+ * @file ui_nav_buttons.cpp
+ * @brief Navigation buttons component implementation
+ *
+ * This module provides navigation buttons for screen transitions,
+ * typically used at the bottom of screens for left/right navigation.
+ */
+
 #include "ui_components.h"
 #include "styles.h"
 #include "ui/fonts.h"
 #include "audio.h"
 
+/**
+ * @brief Create navigation buttons component
+ * @param parent Parent LVGL object
+ * @param config Navigation buttons configuration
+ */
 void ui_nav_buttons_create(lv_obj_t *parent, const ui_nav_buttons_config_t *config)
 {
     // Left button (Settings)

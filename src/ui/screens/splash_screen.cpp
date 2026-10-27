@@ -1,11 +1,23 @@
+/**
+ * @file splash_screen.cpp
+ * @brief Splash screen implementation
+ *
+ * This module provides the splash screen with background image
+ * and customizable loading message display.
+ */
+
 #include <lvgl.h>
 #include "ui/fonts.h"
 #include "i18n.h"
 #include "ui_screens.h"
-#include "ui/images/image_splash.h"
+#include "ui/images/images.h"
 #include "config.h"
 #include "ui/components/ui_components.h"
 
+/**
+ * @brief Show splash screen
+ * @param msg Loading message to display (uses default if null)
+ */
 void ui_splash_screen_show(const char *msg)
 {
     lv_obj_t *scr = lv_obj_create(NULL);

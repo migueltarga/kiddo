@@ -4,6 +4,16 @@ A fun, interactive storytelling device built for kids using an ESP32 with a touc
 
 ![kiddo](https://github.com/migueltarga/kiddo/blob/main/images/IMG_3661.jpg?raw=true)
 
+## Screenshots
+
+Captured on the device with the devtools build (`scripts/devtools.py shot`).
+
+| Home | Library | At the pool | In the kitchen |
+|:---:|:---:|:---:|:---:|
+| <img src="images/screens/home.png" width="180" alt="Home screen"> | <img src="images/screens/library.png" width="180" alt="Story library"> | <img src="images/screens/story_pool.png" width="180" alt="Story page with Zoe and her friends at the pool"> | <img src="images/screens/story_kitchen.png" width="180" alt="Story page with Zoe and grandpa making pancakes"> |
+| **At night** | **Backpack** | **Settings** | |
+| <img src="images/screens/story_night.png" width="180" alt="Night story page in the backyard with a squirrel"> | <img src="images/screens/backpack.png" width="180" alt="Backpack with an item and its description"> | <img src="images/screens/settings.png" width="180" alt="Settings screen"> | |
+
 ## Hardware Requirements
 
 This project uses affordable, easily accessible hardware:
@@ -13,8 +23,8 @@ This project uses affordable, easily accessible hardware:
 - **Mini Speaker** - 8ohm 1W (optional, for audio feedback)
 
 ### 3D Printed Case
-- **Case Design**: [CYD Case on MakerWorld](https://makerworld.com/en/models/772736-cyd-case?from=search#profileId-708840)
-- Perfectly fits the ESP32-2432S028R board and provides a kid-friendly enclosure
+- **Case Design (current)**: [Slim Minimal Case for ESP32 CYD 2.4"/2.8"](https://makerworld.com/en/models/2171220-slim-minimal-case-for-esp32-cyd-2-4-2-8?from=search#profileId-2354976) by [@khpa](https://makerworld.com/en/@khpa) - a slim, clean enclosure for the ESP32-2432S028R
+- **Alternative**: [CYD Case on MakerWorld](https://makerworld.com/en/models/772736-cyd-case?from=search#profileId-708840) - perfectly fits the board and provides a kid-friendly enclosure
 
 ## Features
 
@@ -22,6 +32,8 @@ This project uses affordable, easily accessible hardware:
 - **Multilingual Support**: Stories available in multiple languages (English, Portuguese)
 - **Touch Interface**: Intuitive touch controls perfect for kids
 - **Story Management**: Download and sync stories from remote catalogs
+- **Animated Scenes**: Pages without a picture get a scene that fits the text (bedroom, kitchen, pool, school, forest, beach...), with the people, animals and things the page mentions; tap it and everyone jumps
+- **Backpack**: Stories can give items and ask the child to pick the right one to solve a puzzle
 - **Audio Support**: Optional speaker for sound effects and feedback
 - **WiFi Connectivity**: Download new stories and sync content
 
@@ -80,6 +92,7 @@ Stories are created using AI tools to generate engaging, age-appropriate content
 - **[Random Nerd Tutorials](https://randomnerdtutorials.com/)** - Excellent ESP32 and LVGL setup tutorials
 
 ### Hardware Design
+- **[@khpa on MakerWorld](https://makerworld.com/en/@khpa)** - The slim, minimal 3D printed case Kiddo uses today
 - **[@hedge on MakerWorld](https://makerworld.com/en/@hedge)** - Excellent 3D printed case design that perfectly fits the ESP32-2432S028R
 
 ### Libraries

@@ -1,7 +1,25 @@
+/**
+ * @file kiddo_parser.cpp
+ * @brief Text parsing for story content with image references
+ *
+ * This module parses story text content that contains image references
+ * in the format [img]url[/img]. It extracts both plain text and
+ * structured content segments for display.
+ */
+
 #include "kiddo_parser.h"
 
 namespace KiddoParser {
 
+/**
+ * @brief Parse text content with image references
+ *
+ * Parses text containing [img]url[/img] tags and creates structured
+ * content segments for display, separating text and image content.
+ *
+ * @param input Input text to parse
+ * @return ParsedContent structure with segments and plain text
+ */
 ParsedContent parseText(const String& input) {
     ParsedContent result;
     String working = input;

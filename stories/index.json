@@ -1,5 +1,11 @@
 {
+  "name": "Kiddo",
   "stories": [
+    {
+      "name": "Zoe e a Lua Perdida",
+      "file": "story_lua_perdida.json",
+      "lang": "pt-br"
+    },
     {
       "name": "As Aventuras de Zoe",
       "file": "story_adventure_pt.json",
@@ -8,6 +14,16 @@
     {
       "name": "The Adventures of Zoe",
       "file": "story_adventure.json",
+      "lang": "en"
+    },
+    {
+      "name": "A Chave Mágica",
+      "file": "story_the_key_pt.json",
+      "lang": "pt-br"
+    },
+    {
+      "name": "The Magic Key",
+      "file": "story_the_key.json",
       "lang": "en"
     }
   ]

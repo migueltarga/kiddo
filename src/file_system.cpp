@@ -1,20 +1,40 @@
+/**
+ * @file file_system.cpp
+ * @brief Filesystem operations and LVGL filesystem driver
+ *
+ * This module provides filesystem operations including file I/O,
+ * image caching, story management, and HTTP downloads. It also
+ * implements the LVGL filesystem driver for SPIFFS integration.
+ */
+
 #include "file_system.h"
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
-#include <MD5Builder.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
+
+/** @brief Root CA bundle embedded from certs/x509_crt_bundle.bin (see platformio.ini) */
+extern const uint8_t x509_crt_bundle_start[] asm("_binary_certs_x509_crt_bundle_bin_start");
 
 namespace FileSystem {
 
+/** @brief Filesystem initialization flag */
 static bool fs_initialized = false;
 
+/**
+ * @brief LVGL filesystem open callback
+ * @param drv LVGL filesystem driver
+ * @param path File path
+ * @param mode Open mode
+ * @return File handle or nullptr on error
+ */
 static void* fs_open(lv_fs_drv_t* drv, const char* path, lv_fs_mode_t mode) {
     const char* flags = "";
     if (mode == LV_FS_MODE_WR) flags = "w";
     else if (mode == LV_FS_MODE_RD) flags = "r";
     else if (mode == (LV_FS_MODE_WR | LV_FS_MODE_RD)) flags = "r+";
-    
+
     File* file = new File();
     *file = SPIFFS.open(path, flags);
     if (!*file) {
@@ -24,6 +44,12 @@ static void* fs_open(lv_fs_drv_t* drv, const char* path, lv_fs_mode_t mode) {
     return file;
 }
 
+/**
+ * @brief LVGL filesystem close callback
+ * @param drv LVGL filesystem driver
+ * @param file_p File handle
+ * @return LVGL filesystem result
+ */
 static lv_fs_res_t fs_close(lv_fs_drv_t* drv, void* file_p) {
     File* file = (File*)file_p;
     if (file) {
@@ -37,8 +63,9 @@ static lv_fs_res_t fs_read(lv_fs_drv_t* drv, void* file_p, void* buf, uint32_t b
     File* file = (File*)file_p;
     if (!file) return LV_FS_RES_INV_PARAM;
     
+    // A short read at end of file is not an error; LVGL checks *br itself
     *br = file->read((uint8_t*)buf, btr);
-    return (*br == btr) ? LV_FS_RES_OK : LV_FS_RES_FS_ERR;
+    return LV_FS_RES_OK;
 }
 
 static lv_fs_res_t fs_write(lv_fs_drv_t* drv, void* file_p, const void* buf, uint32_t btw, uint32_t* bw) {
@@ -104,46 +131,41 @@ bool init() {
 }
 
 bool exists(const String& path) {
-    lv_fs_file_t file;
-    lv_fs_res_t res = lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_RD);
-    if (res == LV_FS_RES_OK) {
-        lv_fs_close(&file);
-        return true;
-    }
-    return false;
+    return SPIFFS.exists(path);
+}
+
+size_t fileSize(const String& path) {
+    File file = SPIFFS.open(path, "r");
+    if (!file) return 0;
+    size_t size = file.size();
+    file.close();
+    return size;
 }
 
 String readFile(const String& path) {
-    lv_fs_file_t file;
-    if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_RD) != LV_FS_RES_OK) {
-        return "";
-    }
-    
-    uint32_t size;
-    lv_fs_seek(&file, 0, LV_FS_SEEK_END);
-    lv_fs_tell(&file, &size);
-    lv_fs_seek(&file, 0, LV_FS_SEEK_SET);
-    
+    File file = SPIFFS.open(path, "r");
+    if (!file) return "";
+
+    size_t size = file.size();
     if (size == 0) {
-        lv_fs_close(&file);
+        file.close();
         return "";
     }
-    
+
     char* buffer = (char*)malloc(size + 1);
     if (!buffer) {
-        lv_fs_close(&file);
+        file.close();
         return "";
     }
-    
-    uint32_t bytesRead;
-    lv_fs_res_t res = lv_fs_read(&file, buffer, size, &bytesRead);
-    lv_fs_close(&file);
-    
-    if (res != LV_FS_RES_OK || bytesRead != size) {
+
+    size_t bytesRead = file.read((uint8_t*)buffer, size);
+    file.close();
+
+    if (bytesRead != size) {
         free(buffer);
         return "";
     }
-    
+
     buffer[size] = '\0';
     String content = String(buffer);
     free(buffer);
@@ -151,20 +173,12 @@ String readFile(const String& path) {
 }
 
 bool writeFile(const String& path, const String& content) {
-    lv_fs_file_t file;
-    if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_WR) != LV_FS_RES_OK) {
-        return false;
-    }
-    
-    uint32_t bytesWritten;
-    lv_fs_res_t res = lv_fs_write(&file, content.c_str(), content.length(), &bytesWritten);
-    lv_fs_close(&file);
-    
-    if (res != LV_FS_RES_OK || bytesWritten != content.length()) {
-        return false;
-    }
-    
-    return true;
+    File file = SPIFFS.open(path, "w");
+    if (!file) return false;
+
+    size_t bytesWritten = file.write((const uint8_t*)content.c_str(), content.length());
+    file.close();
+    return bytesWritten == content.length();
 }
 
 bool deleteFile(const String& path) {
@@ -192,49 +206,7 @@ String getCachedImagePath(const String& url) {
 }
 
 bool isImageCached(const String& url) {
-    String path = getCachedImagePath(url);
-    if (!exists(path)) {
-        return false;
-    }
-    
-    // Check if the cached image actually has content
-    lv_fs_file_t file;
-    if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_RD) != LV_FS_RES_OK) {
-        return false;
-    }
-    
-    uint32_t size;
-    lv_fs_seek(&file, 0, LV_FS_SEEK_END);
-    lv_fs_tell(&file, &size);
-    lv_fs_close(&file);
-    
-    // Consider cached only if file has content
-    return size > 0;
-}
-
-bool cacheImage(const String& url, const uint8_t* data, size_t size) {
-    String path = getCachedImagePath(url);
-    
-    Serial.printf("[FILE_SYSTEM] Caching image to: %s (%d bytes)\n", path.c_str(), size);
-    
-    lv_fs_file_t file;
-    if (lv_fs_open(&file, ("S:" + path).c_str(), LV_FS_MODE_WR) != LV_FS_RES_OK) {
-        Serial.printf("[FILE_SYSTEM] Failed to open cache file for writing: %s\n", path.c_str());
-        return false;
-    }
-    
-    uint32_t bytesWritten;
-    lv_fs_res_t res = lv_fs_write(&file, data, size, &bytesWritten);
-    lv_fs_close(&file);
-    
-    if (res != LV_FS_RES_OK || bytesWritten != size) {
-        Serial.printf("[FILE_SYSTEM] Cache write failed: res=%d, written=%d, expected=%d\n", 
-                     res, bytesWritten, size);
-        return false;
-    }
-    
-    Serial.printf("[FILE_SYSTEM] Successfully cached image: %s (%d bytes)\n", path.c_str(), size);
-    return true;
+    return fileSize(getCachedImagePath(url)) > 0;
 }
 
 bool loadIndex(JsonDocument& doc) {
@@ -342,23 +314,44 @@ std::vector<String> listFiles(const String& directory) {
     return files;
 }
 
+/**
+ * @brief Start an HTTP(S) GET request
+ *
+ * HTTPS connections are verified against the embedded root CA bundle;
+ * without it the TLS client would accept any certificate.
+ * The clients must outlive the request, so the caller owns them.
+ */
+static int httpBeginGet(HTTPClient& http, WiFiClientSecure& tls, WiFiClient& plain, const String& url) {
+    bool ok;
+    if (url.startsWith("https://")) {
+        tls.setCACertBundle(x509_crt_bundle_start);
+        ok = http.begin(tls, url);
+    } else {
+        ok = http.begin(plain, url);
+    }
+    if (!ok) return HTTPC_ERROR_CONNECTION_REFUSED;
+
+    http.setTimeout(15000);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+    return http.GET();
+}
+
 bool httpGet(const String& url, String& response) {
     if (WiFi.status() != WL_CONNECTED) {
         return false;
     }
-    
+
+    WiFiClientSecure tls;
+    WiFiClient plain;
     HTTPClient http;
-    http.begin(url);
-    http.setTimeout(15000);
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    
-    int httpCode = http.GET();
+    int httpCode = httpBeginGet(http, tls, plain, url);
     if (httpCode == HTTP_CODE_OK) {
         response = http.getString();
         http.end();
         return true;
     }
-    
+
+    Serial.printf("[FILE_SYSTEM] GET %s failed: %d\n", url.c_str(), httpCode);
     http.end();
     return false;
 }
@@ -368,56 +361,56 @@ bool downloadFile(const String& url, const String& localPath) {
         Serial.println("[FILE_SYSTEM] WiFi not connected");
         return false;
     }
-    
+
+    WiFiClientSecure tls;
+    WiFiClient plain;
     HTTPClient http;
-    http.begin(url);
-    http.setTimeout(15000);
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    
-    int httpCode = http.GET();
-    if (httpCode == HTTP_CODE_OK) {
-        WiFiClient* stream = http.getStreamPtr();
-        
-        File file = SPIFFS.open(localPath, "w");
-        if (!file) {
-            Serial.println("[FILE_SYSTEM] Failed to open file for writing: " + localPath);
-            http.end();
-            return false;
-        }
-        
-        uint8_t buffer[1024];
-        int len = http.getSize();
-        int totalRead = 0;
-        
-        while (http.connected() && (len > 0 || len == -1)) {
-            size_t size = stream->available();
-            if (size) {
-                int c = stream->readBytes(buffer, min(size, sizeof(buffer)));
-                file.write(buffer, c);
-                totalRead += c;
-                if (len > 0) len -= c;
-            }
-            delay(1);
-        }
-        
-        file.close();
+    int httpCode = httpBeginGet(http, tls, plain, url);
+    if (httpCode != HTTP_CODE_OK) {
+        Serial.printf("[FILE_SYSTEM] Download failed: %d\n", httpCode);
         http.end();
-        
-        Serial.printf("[FILE_SYSTEM] Downloaded %d bytes to %s\n", totalRead, localPath.c_str());
-        return totalRead > 0;
+        return false;
     }
-    
-    Serial.printf("[FILE_SYSTEM] Download failed: %d\n", httpCode);
+
+    // Download to a temporary file so an interrupted transfer never leaves
+    // a truncated file at the final path.
+    String tmpPath = localPath + ".tmp";
+    File file = SPIFFS.open(tmpPath, "w");
+    if (!file) {
+        Serial.println("[FILE_SYSTEM] Failed to open file for writing: " + tmpPath);
+        http.end();
+        return false;
+    }
+
+    int expected = http.getSize();
+    int written = http.writeToStream(&file);
+    file.close();
     http.end();
-    return false;
+
+    if (written <= 0 || (expected > 0 && written != expected)) {
+        Serial.printf("[FILE_SYSTEM] Incomplete download of %s: %d of %d bytes\n",
+                      url.c_str(), written, expected);
+        SPIFFS.remove(tmpPath);
+        return false;
+    }
+
+    if (SPIFFS.exists(localPath)) {
+        SPIFFS.remove(localPath);
+    }
+    if (!SPIFFS.rename(tmpPath, localPath)) {
+        Serial.println("[FILE_SYSTEM] Failed to rename " + tmpPath);
+        SPIFFS.remove(tmpPath);
+        return false;
+    }
+
+    Serial.printf("[FILE_SYSTEM] Downloaded %d bytes to %s\n", written, localPath.c_str());
+    return true;
 }
 
 void clearCache() {
     std::vector<String> cacheFiles = listFiles("/cache");
     for (const String& filename : cacheFiles) {
-        String path = "/cache/" + filename;
-        if (deleteFile(path)) {
-        }
+        deleteFile("/cache/" + filename);
     }
 }
 
@@ -425,9 +418,7 @@ void clearStories() {
     std::vector<String> allFiles = listFiles("/");
     for (const String& filename : allFiles) {
         if (filename.endsWith(".json") && filename != "index.json") {
-            String path = "/" + filename;
-            if (deleteFile(path)) {
-            }
+            deleteFile("/" + filename);
         }
     }
     

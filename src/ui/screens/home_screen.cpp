@@ -1,3 +1,12 @@
+/**
+ * @file home_screen.cpp
+ * @brief Home screen implementation
+ *
+ * This module provides the main home screen with navigation
+ * buttons for settings and stories, along with background
+ * and branding elements.
+ */
+
 #include <lvgl.h>
 #include "i18n.h"
 #include "styles.h"
@@ -11,18 +20,32 @@ using simple_cb_t = void (*)();
 static simple_cb_t g_open_settings_cb = nullptr;
 static simple_cb_t g_open_stories_cb = nullptr;
 
+/**
+ * @brief Set home screen callback functions
+ * @param open_settings Callback for settings button
+ * @param open_stories Callback for stories button
+ */
 void ui_home_screen_set_callbacks(simple_cb_t open_settings, simple_cb_t open_stories)
 {
     g_open_settings_cb = open_settings;
     g_open_stories_cb = open_stories;
 }
 
+/**
+ * @brief Settings button event handler
+ * @param e LVGL event
+ */
 static void on_open_settings(lv_event_t *e)
 {
     (void)e;
     if (g_open_settings_cb)
         g_open_settings_cb();
 }
+
+/**
+ * @brief Stories button event handler
+ * @param e LVGL event
+ */
 static void on_open_stories(lv_event_t *e)
 {
     (void)e;

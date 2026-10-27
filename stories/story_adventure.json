@@ -4,7 +4,7 @@
   "start": "start",
   "nodes": {
     "start": {
-      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/1.jpg[/img]Zoe is 4 years old and loves playing with her teddy bear, Ted.\nOne starry night, she finds a magical door in the middle of her room.\nThe door glows and seems to be calling them.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/1.jpg[/img]Zoe is 4 years old and loves playing with her teddy bear, Ted.\nOne starry night, she finds a magical door in the middle of her room.\nThe door glows and seems to be calling them.\nNext to the door, there's a shiny golden key!",
       "choices": [
         {
           "text": "Enter the door",
@@ -26,7 +26,7 @@
       ]
     },
     "flowers": {
-      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]The path of flowers is soft and shiny.\nMany blue, red, and yellow butterflies fly everywhere.\nA giant butterfly lands in front of them and speaks with a gentle voice.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]The path of flowers is soft and shiny.\nMany blue, red, and yellow butterflies fly everywhere.\nZoe picks up a beautiful glowing flower that never seems to wilt.\nA giant butterfly lands in front of them and speaks with a gentle voice.",
       "choices": [
         {
           "text": "Listen to butterfly",
@@ -48,7 +48,7 @@
       ]
     },
     "help_butterfly": {
-      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]The butterfly guides Zoe and Ted among the flowers until they reach a huge tree.\nInside it there is a golden chest.\nZoe opens the chest and finds many magical toys that move on their own and talk to her.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]The butterfly guides Zoe and Ted among the flowers until they reach a huge tree.\nInside it there is a golden chest.\nZoe opens the chest and finds many magical toys that move on their own and talk to her.\nThe butterfly also gives Zoe a special charm before saying goodbye.",
       "choices": [
         {
           "text": "Play with toys",
@@ -70,13 +70,30 @@
       ]
     },
     "lake": {
-      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]They sit by the lake, throw little stones in the water, and watch the circles forming.\nTed almost falls into the water and Zoe laughs a lot.",
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]They sit by the lake, throw little stones in the water, and watch the circles forming.\nTed almost falls into the water and Zoe laughs a lot.\nNear the shore, they notice a small locked treasure chest half-buried in the sand.",
       "choices": [
+        {
+          "text": "Open treasure chest",
+          "next": "treasure_chest"
+        },
         {
           "text": "Explore more",
           "next": "end_lake"
         }
       ]
+    },
+    "treasure_chest": {
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe uses the magic key to open the treasure chest!\nInside, they find sparkling gems and an ancient map showing secret paths through the enchanted forest.\nWhat an amazing discovery!",
+      "choices": [
+        {
+          "text": "Follow map",
+          "next": "secret_path"
+        }
+      ]
+    },
+    "secret_path": {
+      "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/11.jpg[/img]Following the map, Zoe and Ted discover a hidden grove filled with singing trees and dancing flowers.\nThis secret place is even more magical than anything they've seen before!",
+      "end": true
     },
     "end_lake": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]After having fun at the lake, Zoe and Ted find a path back to the magical door.\nThey return to the room, happy with the adventure.",

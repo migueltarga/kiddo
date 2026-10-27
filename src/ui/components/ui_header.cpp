@@ -1,18 +1,35 @@
+/**
+ * @file ui_header.cpp
+ * @brief Header component implementation
+ *
+ * This module provides a reusable header component with optional
+ * back button, title text, and marquee scrolling functionality.
+ */
+
 #include "ui_components.h"
 #include "styles.h"
 #include "ui/fonts.h"
 #include "audio.h"
 
+/**
+ * @brief Create a header component
+ * @param parent Parent LVGL object
+ * @param config Header configuration
+ * @return Created header object
+ */
 lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
 {
     // Create header container
     lv_obj_t *header = lv_obj_create(parent);
     lv_obj_set_size(header, 240, 38);
     lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(header, lv_color_hex(0xe9d4a9), 0);
+    lv_obj_set_style_bg_color(header, palette::parchment(), 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_border_width(header, 1, 0);
+    lv_obj_set_style_border_side(header, LV_BORDER_SIDE_BOTTOM, 0);
+    lv_obj_set_style_border_color(header, palette::parchment_dark(), 0);
     lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_column(header, 8, 0);
     lv_obj_set_style_pad_left(header, 6, 0);
     lv_obj_set_style_pad_right(header, 6, 0);
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
@@ -33,15 +50,17 @@ lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
         uint32_t btn_width = config->back_button_width > 0 ? config->back_button_width : 32;
         lv_obj_t *btn_back = lv_btn_create(header);
         ui_add_click_sound(btn_back);
-        lv_obj_set_size(btn_back, btn_width, 32);  // Smaller height too
-        apply_primary_button_style(btn_back);
+        lv_obj_set_size(btn_back, btn_width, 30);
+        apply_secondary_button_style(btn_back);
+        lv_obj_set_style_radius(btn_back, 8, 0);
+        lv_obj_set_style_pad_all(btn_back, 0, 0);
         if (config->back_callback) {
             lv_obj_add_event_cb(btn_back, config->back_callback, LV_EVENT_CLICKED, config->back_user_data);
         }
         
         lv_obj_t *back_label = lv_label_create(btn_back);
         lv_obj_set_style_text_font(back_label, font14(), 0);
-        lv_label_set_text(back_label, config->back_button_text ? config->back_button_text : "<");
+        lv_label_set_text(back_label, config->back_button_text ? config->back_button_text : LV_SYMBOL_LEFT);
         lv_obj_center(back_label);
     }
 
@@ -50,7 +69,7 @@ lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
         lv_obj_t *title_label = lv_label_create(header);
         lv_obj_set_style_text_font(title_label, font16(), 0);
         lv_label_set_text(title_label, config->title_text);
-        lv_obj_set_style_text_color(title_label, lv_color_black(), 0);
+        lv_obj_set_style_text_color(title_label, palette::ink(), 0);
         
         // Enable marquee for long titles (only if not centered)
         if (config->enable_marquee && !config->center_title) {
@@ -77,7 +96,7 @@ ui_header_config_t ui_header_config_default(const char *title_text, lv_event_cb_
 {
     ui_header_config_t config = {
         .title_text = title_text,
-        .back_button_text = "<",
+        .back_button_text = LV_SYMBOL_LEFT,
         .back_callback = back_callback,
         .back_user_data = NULL,
         .show_back_button = (back_callback != NULL),
