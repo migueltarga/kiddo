@@ -17,15 +17,28 @@ namespace story
 
 /**
  * @brief Get all available stories
- * @return Reference to vector containing all loaded stories
+ *
+ * Entries are summaries (id, title, start, file, has_inventory) without
+ * nodes or items; use load() to read a complete story.
+ *
+ * @return Reference to vector containing the story summaries
  */
 const std::vector<Story_t> &all();
 
 /**
- * @brief Load all story files from the filesystem
- * Scans the stories directory and parses all JSON story files
+ * @brief Scan the filesystem for stories in the current language
+ *
+ * Rebuilds all(), which invalidates references into it.
  */
 void loadFromFS();
+
+/**
+ * @brief Load a complete story
+ * @param summary Entry from all()
+ * @param out Reference to Story_t structure to fill
+ * @return True if the story file was read and parsed
+ */
+bool load(const Story_t &summary, Story_t &out);
 
 /**
  * @brief Parse a story JSON string into a Story_t structure

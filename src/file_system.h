@@ -22,13 +22,20 @@ namespace FileSystem {
  */
 bool init();
 
-// File operations using LVGL fs
+// File operations (SPIFFS; safe to call from the async worker task)
 /**
  * @brief Check if a file exists
  * @param path Path to the file
  * @return True if file exists
  */
 bool exists(const String& path);
+
+/**
+ * @brief Get the size of a file
+ * @param path Path to the file
+ * @return Size in bytes, or 0 if the file is missing
+ */
+size_t fileSize(const String& path);
 
 /**
  * @brief Read entire file content as string
@@ -90,15 +97,6 @@ String getCachedImagePath(const String& url);
  */
 bool isImageCached(const String& url);
 
-/**
- * @brief Cache image data
- * @param url Image URL
- * @param data Image data buffer
- * @param size Size of image data
- * @return True if caching was successful
- */
-bool cacheImage(const String& url, const uint8_t* data, size_t size);
-
 // Index management for stories
 /**
  * @brief Load story index from file
@@ -148,6 +146,10 @@ bool httpGet(const String& url, String& response);
 
 /**
  * @brief Download file from URL
+ *
+ * The file is written to a temporary path and only moved into place once
+ * the full body has arrived. HTTPS is verified against the root CA bundle.
+ *
  * @param url URL to download from
  * @param localPath Local path to save file
  * @return True if download was successful

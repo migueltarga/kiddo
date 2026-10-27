@@ -21,13 +21,56 @@ namespace story
     extern std::vector<Story_t> g_stories;
 
     /**
+     * @brief Read the summary fields of a story in the current language
+     *
+     * Deserializes straight from the file with a filter, so the node text
+     * is never held in memory.
+     *
+     * @param path SPIFFS path of the story file
+     * @param out Summary to fill
+     * @return True if the file is a story in the current language
+     */
+    static bool readSummary(const String &path, Story_t &out)
+    {
+        File file = SPIFFS.open(path, "r");
+        if (!file) {
+            return false;
+        }
+
+        JsonDocument filter;
+        filter["id"] = true;
+        filter["title"] = true;
+        filter["start"] = true;
+        filter["lang"] = true;
+        filter["has_inventory"] = true;
+
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, file, DeserializationOption::Filter(filter));
+        file.close();
+        if (err) {
+            return false;
+        }
+
+        if (!story_utils::matchesLanguage(current_language, doc["lang"] | "")) {
+            return false;
+        }
+
+        out.id = doc["id"] | "";
+        out.title = doc["title"] | "";
+        out.start = doc["start"] | "";
+        out.has_inventory = doc["has_inventory"] | false;
+        out.file = path;
+        return out.id.length() > 0 && out.start.length() > 0;
+    }
+
+    /**
      * @brief Load all stories from filesystem
      * Scans the stories directory and loads all indexed story files
      */
     void loadFromFS()
     {
         g_stories.clear();
-        
+
         std::vector<String> indexedFiles;
         JsonDocument indexDoc;
         if (FileSystem::loadIndex(indexDoc)) {
@@ -39,68 +82,34 @@ namespace story
                 }
             }
         }
-        
-        if (!indexedFiles.empty()) {
-            for (const String& file : indexedFiles) {
-                if (!FileSystem::exists(file)) {
-                    continue;
-                }
-                
-                String payload = FileSystem::readFile(file);
-                if (payload.length() == 0) {
-                    continue;
-                }
-                
-                JsonDocument storyDoc;
-                if (deserializeJson(storyDoc, payload) != DeserializationError::Ok) {
-                    continue;
-                }
-                
-                String lang = storyDoc["lang"].as<String>();
-                if (!story_utils::matchesLanguage(current_language, lang)) {
-                    continue;
-                }
-                
-                Story_t st;
-                bool ok = parseStoryJson(payload, st);
-                if (ok) {
-                    g_stories.push_back(st);
-                }
+
+        for (const String& file : indexedFiles) {
+            Story_t st;
+            if (readSummary(file, st)) {
+                g_stories.push_back(st);
             }
         }
-        
+
+        // Also pick up story files that are on disk but missing from the index
         File root = SPIFFS.open("/");
         if (root && root.isDirectory()) {
             File file = root.openNextFile();
             while (file) {
                 if (!file.isDirectory()) {
-                    String filename = file.name();
                     String filepath = file.path();
-                    if (filename.endsWith(".json") && filename != "/index.json" && filepath != "/index.json") {
-                        String normalizedFilename = filename.startsWith("/") ? filename : ("/" + filename);
-                        String normalizedPath = filepath.startsWith("/") ? filepath : ("/" + filepath);
-                        
+                    String normalizedPath = filepath.startsWith("/") ? filepath : ("/" + filepath);
+                    if (normalizedPath.endsWith(".json") && normalizedPath != "/index.json") {
                         bool alreadyLoaded = false;
                         for (const String& indexedFile : indexedFiles) {
-                            if (indexedFile == normalizedFilename || indexedFile == normalizedPath) {
+                            if (indexedFile == normalizedPath) {
                                 alreadyLoaded = true;
                                 break;
                             }
                         }
-                        
-                        if (!alreadyLoaded) {
-                            String content = FileSystem::readFile(file.path());
-                            
-                            JsonDocument storyDoc;
-                            if (deserializeJson(storyDoc, content) == DeserializationError::Ok) {
-                                String lang = storyDoc["lang"].as<String>();
-                                if (story_utils::matchesLanguage(current_language, lang)) {
-                                    Story_t story;
-                                    if (parseStoryJson(content, story)) {
-                                        g_stories.push_back(story);
-                                    }
-                                }
-                            }
+
+                        Story_t st;
+                        if (!alreadyLoaded && readSummary(normalizedPath, st)) {
+                            g_stories.push_back(st);
                         }
                     }
                 }

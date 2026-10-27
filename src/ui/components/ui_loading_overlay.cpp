@@ -38,7 +38,7 @@ lv_obj_t* ui_loading_overlay_create(lv_obj_t* parent, const ui_loading_overlay_c
     lv_obj_t *spinner = lv_spinner_create(box);
     lv_obj_set_size(spinner, 32, 32);
     lv_obj_align(spinner, LV_ALIGN_TOP_MID, 0, 4);
-    lv_obj_set_style_arc_color(spinner, lv_color_hex(0x666666), LV_PART_MAIN);
+    lv_obj_set_style_arc_color(spinner, palette::parchment(), LV_PART_MAIN);
     lv_obj_set_style_arc_color(spinner, config->spinner_color, LV_PART_INDICATOR);
 
     lv_obj_t *lbl = lv_label_create(box);
@@ -54,10 +54,10 @@ ui_loading_overlay_config_t ui_loading_overlay_config_default(const char* messag
 {
     ui_loading_overlay_config_t config;
     config.message = message;
-    config.box_color = lv_palette_main(LV_PALETTE_ORANGE);
-    config.spinner_color = lv_color_hex(0x2196F3);
-    config.text_color = lv_color_white();
-    config.box_width = 140;
+    config.box_color = palette::paper();
+    config.spinner_color = palette::primary();
+    config.text_color = palette::ink();
+    config.box_width = 180;
     config.box_height = 100;
     return config;
 }

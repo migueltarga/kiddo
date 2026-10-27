@@ -3,85 +3,81 @@
  * @brief Image display and JPEG decoding functionality
  *
  * This module handles JPEG image decoding and display using the
- * JPEGDecoder library and LVGL canvas objects. It provides
+ * JPEGDecoder library and LVGL image objects. It provides
  * functionality to load and display images from SPIFFS.
  */
 
+#include "styles.h"
 #include "image_display.h"
 #include <SPIFFS.h>
 #include <JPEGDecoder.h>
+#include <esp_heap_caps.h>
 
 namespace ImageDisplay {
 
 /**
+ * @brief Marks loading placeholders through user data
+ *
+ * Compared by address, so siblings whose user data holds something else
+ * (such as an image buffer) are never misread as a string.
+ */
+static const char kPlaceholderTag[] = "loading_placeholder";
+
+/** @brief RAM left free for the network worker when decoding (an HTTPS handshake peaks around this) */
+static const size_t kHeapReserve = 24 * 1024;
+
+/**
+ * @brief Stop showing and free the picture an image object owns
+ *
+ * The picture is one heap block, an lv_image_dsc_t followed by its pixels,
+ * kept in the object's user data. The image object shows it directly: an
+ * lv_canvas would work too, but LVGL 9.6's canvas destructor hands the image
+ * cache a bad pointer and logs "invalid magic" every time a page closes.
+ *
+ * @param img_obj Image object
+ */
+static void free_picture(lv_obj_t* img_obj) {
+    void* block = lv_obj_get_user_data(img_obj);
+    if (!block) return;
+    lv_image_set_src(img_obj, nullptr);
+    free(block);
+    lv_obj_set_user_data(img_obj, nullptr);
+}
+
+/**
  * @brief LVGL object delete event callback
- * Frees allocated image buffer when image object is deleted
+ * Frees the picture when the image object is deleted
  * @param e LVGL event
  */
 static void img_delete_event_cb(lv_event_t* e) {
     if (lv_event_get_code(e) == LV_EVENT_DELETE) {
-        lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
-        uint16_t* buf = (uint16_t*)lv_obj_get_user_data(obj);
-        if (buf) {
-            free(buf);
-            lv_obj_set_user_data(obj, nullptr);
-        }
+        free_picture((lv_obj_t*)lv_event_get_target(e));
     }
 }
 
 /**
- * @brief Create loading placeholder for image display
- * Shows a spinner while image is loading
+ * @brief Show a spinner while the image loads
+ *
+ * The spinner goes inside the image object, centered in the space the
+ * picture will take; displaying the image clears it.
+ *
  * @param img_obj Image object to create placeholder for
  */
 void createLoadingPlaceholder(lv_obj_t* img_obj) {
-    lv_obj_t* placeholder = lv_obj_create(lv_obj_get_parent(img_obj));
-    lv_obj_set_size(placeholder, 220, 140);
-    lv_obj_set_style_bg_opa(placeholder, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_border_width(placeholder, 0, 0);
-    lv_obj_set_style_pad_all(placeholder, 0, 0);
-    
-    lv_obj_t* spinner = lv_spinner_create(placeholder);
+    lv_obj_t* spinner = lv_spinner_create(img_obj);
     lv_obj_set_size(spinner, 32, 32);
     lv_obj_center(spinner);
-    lv_obj_set_style_arc_color(spinner, lv_color_hex(0x666666), LV_PART_MAIN);
-    lv_obj_set_style_arc_color(spinner, lv_color_hex(0x2196F3), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(spinner, palette::parchment(), LV_PART_MAIN);
+    lv_obj_set_style_arc_color(spinner, palette::primary(), LV_PART_INDICATOR);
     
-    lv_obj_set_user_data(placeholder, (void*)"loading_placeholder");
+    lv_obj_set_user_data(spinner, (void*)kPlaceholderTag);
 }
 
-bool displayJpegFromFile(const String& filepath, lv_obj_t* img_obj) {
-    uint16_t* old_buf = (uint16_t*)lv_obj_get_user_data(img_obj);
-    if (old_buf) {
-        free(old_buf);
-        lv_obj_set_user_data(img_obj, nullptr);
-    }
-    
-    lv_obj_clean(img_obj);
-    
-    lv_fs_file_t file;
-    String lvgl_path = "S:" + filepath;
-    if (lv_fs_open(&file, lvgl_path.c_str(), LV_FS_MODE_RD) != LV_FS_RES_OK) {
-        Serial.println("[IMAGE_DISPLAY] ERROR: Could not open file via LVGL FS: " + filepath);
-        return false;
-    }
-    
-    uint32_t fileSize;
-    lv_fs_seek(&file, 0, LV_FS_SEEK_END);
-    lv_fs_tell(&file, &fileSize);
-    lv_fs_close(&file);
-    
-    size_t freeHeap = ESP.getFreeHeap();
-    
-    if (freeHeap < 80000) {
-        Serial.printf("[IMAGE_DISPLAY] ERROR: Insufficient heap memory: %d bytes\n", freeHeap);
-        return false;
-    }
-
-    // Use the SPIFFS file directly for JPEGDecoder (it doesn't support LVGL FS)
+Result displayJpegFromFile(const String& filepath, lv_obj_t* img_obj) {
+    uint32_t started = millis();
     if (!JpegDec.decodeFsFile(filepath)) {
         Serial.println("[IMAGE_DISPLAY] JPEGDecoder: decode failed");
-        return false;
+        return Result::DECODE_FAILED;
     }
     
     float scale_x = 220.0f / JpegDec.width;
@@ -95,14 +91,30 @@ bool displayJpegFromFile(const String& filepath, lv_obj_t* img_obj) {
     int scaled_width = (int)(JpegDec.width * scale);
     int scaled_height = (int)(JpegDec.height * scale);
     
+    // The background worker may be in the middle of an HTTPS download, which
+    // needs a lot of RAM for a moment; leave it room and let the caller retry
+    // later rather than starving the download or failing the image
     size_t img_size = scaled_width * scaled_height * 2;
-    uint16_t* img_buf = (uint16_t*)malloc(img_size);
-    if (!img_buf) {
-        Serial.println("[IMAGE_DISPLAY] ERROR: Failed to allocate image buffer");
+    size_t block_size = sizeof(lv_image_dsc_t) + img_size;
+    size_t free_heap = ESP.getFreeHeap();
+    size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    uint8_t* block = nullptr;
+    if (free_heap >= block_size + kHeapReserve && largest >= block_size) {
+        block = (uint8_t*)malloc(block_size);
+    }
+    if (!block) {
+        Serial.printf("[IMAGE_DISPLAY] Waiting for memory: need %u, free %u, largest block %u\n",
+                      img_size, free_heap, largest);
         JpegDec.abort();
-        return false;
+        return Result::NO_MEMORY;
     }
     
+    // Only now replace what the widget shows (old image, spinner)
+    free_picture(img_obj);
+    lv_obj_clean(img_obj);
+    
+    lv_image_dsc_t* dsc = (lv_image_dsc_t*)block;
+    uint16_t* img_buf = (uint16_t*)(block + sizeof(lv_image_dsc_t));
     memset(img_buf, 0, img_size);
     
     uint16_t* pImg;
@@ -139,32 +151,49 @@ bool displayJpegFromFile(const String& filepath, lv_obj_t* img_obj) {
     }
     
     JpegDec.abort();
+    Serial.printf("[IMAGE_DISPLAY] Decoded %ux%u in %lu ms\n", JpegDec.width, JpegDec.height, millis() - started);
     
-    lv_obj_t* canvas = lv_canvas_create(img_obj);
-    if (!canvas) {
-        Serial.println("[IMAGE_DISPLAY] ERROR: Failed to create canvas");
-        free(img_buf);
-        return false;
-    }
+    memset(dsc, 0, sizeof(lv_image_dsc_t));
+    dsc->header.magic = LV_IMAGE_HEADER_MAGIC;
+    dsc->header.cf = LV_COLOR_FORMAT_RGB565;
+    dsc->header.w = scaled_width;
+    dsc->header.h = scaled_height;
+    dsc->header.stride = scaled_width * 2;
+    dsc->data_size = img_size;
+    dsc->data = (const uint8_t*)img_buf;
     
-    lv_canvas_set_buffer(canvas, img_buf, scaled_width, scaled_height, LV_COLOR_FORMAT_RGB565);
-    lv_obj_set_size(canvas, scaled_width, scaled_height);
-    lv_obj_center(canvas);
-    
-    lv_obj_set_user_data(img_obj, img_buf);
+    // Centered in the image object's fixed area
+    lv_obj_set_user_data(img_obj, block);
+    lv_image_set_src(img_obj, dsc);
+    // Register once even if the widget is reused for another image
+    lv_obj_remove_event_cb(img_obj, img_delete_event_cb);
     lv_obj_add_event_cb(img_obj, img_delete_event_cb, LV_EVENT_DELETE, nullptr);
     
-    return true;
+    return Result::OK;
+}
+
+void removeLoadingPlaceholder(lv_obj_t* img_obj) {
+    uint32_t child_count = lv_obj_get_child_cnt(img_obj);
+    for (uint32_t i = 0; i < child_count; i++) {
+        lv_obj_t* child = lv_obj_get_child(img_obj, i);
+        if (lv_obj_get_user_data(child) == kPlaceholderTag) {
+            lv_obj_delete(child);
+            return;
+        }
+    }
+}
+
+void showError(lv_obj_t* img_obj, const char* message) {
+    lv_obj_t* label = lv_label_create(img_obj);
+    lv_label_set_text(label, message);
+    lv_obj_set_style_text_color(label, palette::ink_soft(), 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(label);
 }
 
 void cleanupImageResources(lv_obj_t* img_obj) {
     if (!img_obj) return;
-    
-    uint16_t* img_buf = (uint16_t*)lv_obj_get_user_data(img_obj);
-    if (img_buf) {
-        free(img_buf);
-        lv_obj_set_user_data(img_obj, nullptr);
-    }
+    free_picture(img_obj);
 }
 
 }

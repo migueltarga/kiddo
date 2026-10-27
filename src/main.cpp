@@ -24,6 +24,7 @@
 #include "ui/fonts.h"
 #include "ui/router.h"
 #include "audio.h"
+#include "devtools.h"
 
 #if __has_include(<WiFi.h>)
 #include <WiFi.h>
@@ -55,6 +56,8 @@ bool wifi_connected = false;
  */
 static void touchscreen_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
+    if (devtools::read_touch(data))
+        return;
     if (touchscreen.tirqTouched() && touchscreen.touched())
     {
         TS_Point p = touchscreen.getPoint();
@@ -96,12 +99,12 @@ void setup()
     Serial.begin(115200);
     delay(50);
     
-    SPIFFS.begin(true);
-    
     tft.init();
     tft.setRotation(0);
     backlight_init();
     lv_init();
+    // Read real time, so blocking work (JPEG decode, HTTP) doesn't slow LVGL's clock
+    lv_tick_set_cb([]() -> uint32_t { return millis(); });
     
     FileSystem::init();
     
@@ -111,17 +114,20 @@ void setup()
     pinMode(XPT2046_IRQ, INPUT_PULLUP);
     lv_display_t *disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, sizeof(draw_buf));
     lv_display_set_default(disp);
+    devtools::init(disp);
     lv_indev_t *indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
     lv_indev_set_display(indev, disp);
     lv_indev_set_read_cb(indev, touchscreen_read);
 
     audio::init();
-    prefs.begin(PNS, false);
+    bool prefs_ok = prefs.begin(PNS, false);
     brightness = prefs.getUChar(PK_BRIGHTNESS, 200);
     current_language = (Language)prefs.getUInt(PK_LANG, LANG_EN);
     story_font_scale = prefs.getUChar(PK_STORY_FONT, 1);
     online_mode = prefs.getBool(PK_ONLINE_MODE, false);
+    Serial.printf("[BOOT] Settings %s: language %u, online %d, brightness %u\n",
+                  prefs_ok ? "loaded" : "UNAVAILABLE", (unsigned)current_language, online_mode, brightness);
     backlight_write(brightness);
 
     ui_router::show_splash(S()->loading);
@@ -160,17 +166,20 @@ void setup()
     InventoryManager::initialize();
     
     story::loadFromFS();
+    // Load the catalog while the reader is still on the home screen
+    if (wifi_connected)
+        ui_library_prefetch_catalog();
     ui_story_set_home_cb([]() { ui_router::show_home(); });
     ui_router::show_home();
+    Serial.printf("[BOOT] Home shown after %lu ms\n", millis());
 }
 
 void loop()
 {
     lv_timer_handler();
-    audio::update();
     
     AsyncManager::process();
+    devtools::poll();
     
-    lv_tick_inc(5);
     delay(5);
 }

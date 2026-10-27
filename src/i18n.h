@@ -92,6 +92,7 @@ struct LocalizedStrings
   const char *catalog_url_description;  /**< Catalog URL description */
   const char *save;                     /**< Save button text */
   const char *restore_default;          /**< Restore default button text */
+  const char *catalog_default_name;     /**< Built-in catalog in the catalog picker */
 
   // Story screen strings
   const char *leave_story_title;        /**< Leave story dialog title */
@@ -102,14 +103,28 @@ struct LocalizedStrings
   // Inventory strings
   const char *inventory_title;          /**< Inventory dialog title */
   const char *new_item_title;           /**< New item notification title */
-  const char *new_item_message;         /**< New item notification message */
   const char *item_added_message;       /**< Item added message */
   const char *choose_item;              /**< Choose item button text */
+  const char *item_not_needed;          /**< Tapping an item when the story needs none */
+  const char *inventory_empty;          /**< Inventory dialog with nothing in it */
 
   // Image loading strings
   const char *loading_image;            /**< Loading image message */
   const char *decode_failed;            /**< Image decode failed message */
   const char *load_failed;              /**< Image load failed message */
+  // Toasts and prompts
+  const char *catalog_url_updated;      /**< Catalog URL saved toast */
+  const char *catalog_url_reset;        /**< Default catalog URL restored toast */
+  const char *wifi_password_prompt;     /**< Password prompt, %s is the SSID */
+  // Resume strings
+  const char *resume_title;             /**< Continue saved story dialog title */
+  const char *resume_message;           /**< Continue saved story dialog message */
+  const char *resume_continue;          /**< Continue from saved place button */
+  const char *resume_start_over;        /**< Start story over button */
+  // Loading strings
+  const char *checking_stories;         /**< Library row while the catalog loads */
+  const char *downloading_story;        /**< Overlay while a story downloads */
+  const char *home_tagline;             /**< Line under the logo on the home screen */
 };
 
 /**

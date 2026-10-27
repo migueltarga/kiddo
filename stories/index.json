@@ -1,5 +1,11 @@
 {
+  "name": "Kiddo",
   "stories": [
+    {
+      "name": "Zoe e a Lua Perdida",
+      "file": "story_lua_perdida.json",
+      "lang": "pt-br"
+    },
     {
       "name": "As Aventuras de Zoe",
       "file": "story_adventure_pt.json",

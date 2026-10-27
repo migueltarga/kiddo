@@ -35,6 +35,16 @@ static lv_obj_t *status_label = nullptr;
 static std::vector<WiFiNetworkInfo> networks;
 static String selected_ssid = "";
 static bool scanning = false;
+/** @brief Polls the asynchronous network scan */
+static lv_timer_t *scan_timer = nullptr;
+/** @brief When the current scan started */
+static uint32_t scan_started_ms = 0;
+/** @brief Give up on a scan after this long (the old blocking scan waited 10 s) */
+static const uint32_t SCAN_DEADLINE_MS = 15000;
+/** @brief Polls the connection attempt */
+static lv_timer_t *connection_timer = nullptr;
+/** @brief Delays leaving the screen after a successful connection */
+static lv_timer_t *return_timer = nullptr;
 
 /**
  * @brief Back button click handler
@@ -47,6 +57,40 @@ static void perform_network_scan();
 static void refresh_network_list();
 static void connect_to_selected_network(const String& ssid, const String& password);
 
+static void delete_timer(lv_timer_t *&timer) {
+    if (timer) {
+        lv_timer_delete(timer);
+        timer = nullptr;
+    }
+}
+
+/**
+ * @brief Leave the WiFi screen and return to settings
+ *
+ * Loads a fresh screen and frees this one, so nothing from the WiFi screen
+ * (or its timers) outlives it.
+ */
+static void leave_ssid_screen() {
+    delete_timer(scan_timer);
+    delete_timer(connection_timer);
+    delete_timer(return_timer);
+
+    lv_obj_t *old_screen = ssid_screen;
+    ssid_screen = nullptr;
+    ssid_list = nullptr;
+    scan_btn = nullptr;
+    status_label = nullptr;
+
+    lv_scr_load(lv_obj_create(NULL));
+    // Deferred: we may be running inside an event of this screen's objects
+    if (old_screen) {
+        lv_obj_delete_async(old_screen);
+    }
+
+    ui_router::show_home();
+    ui_router::show_settings();
+}
+
 static void ssid_back_clicked(lv_event_t *e) {
     extern bool online_mode;
     extern Preferences prefs;
@@ -55,25 +99,7 @@ static void ssid_back_clicked(lv_event_t *e) {
         prefs.putBool(PK_ONLINE_MODE, online_mode);
     }
     
-    lv_obj_t *clean_screen = lv_obj_create(NULL);
-    lv_scr_load(clean_screen);
-    lv_timer_handler();
-    
-    ssid_screen = nullptr;
-    ssid_list = nullptr;
-    scan_btn = nullptr;
-    status_label = nullptr;
-    
-    extern void ui_app_before_screen_change();
-    ui_app_before_screen_change();
-    
-    extern void ui_settings_screen_reset();
-    ui_settings_screen_reset();
-    
-    ui_router::show_home();
-    lv_timer_handler();
-    delay(10);
-    ui_router::show_settings();
+    leave_ssid_screen();
 }
 
 static void ssid_scan_clicked(lv_event_t *e) {
@@ -90,15 +116,26 @@ static void ssid_scan_clicked(lv_event_t *e) {
         lv_label_set_text(lv_obj_get_child(scan_btn, 0), S()->scanning);
     }
     
-    lv_timer_create([](lv_timer_t *t) {
+    // Scan in the background and poll, so the UI keeps running meanwhile
+    WiFi.mode(WIFI_STA);
+    WiFi.scanNetworks(true);
+    scan_started_ms = millis();
+    delete_timer(scan_timer);
+    scan_timer = lv_timer_create([](lv_timer_t *t) {
+        // scanComplete() reports WIFI_SCAN_FAILED once the core's own 6 s
+        // timeout passes, but a slower scan still delivers its results
+        // afterwards, so keep polling until our longer deadline
+        if (WiFi.scanComplete() < 0 && millis() - scan_started_ms < SCAN_DEADLINE_MS) {
+            return;
+        }
+        delete_timer(scan_timer);
         perform_network_scan();
-        lv_timer_del(t);
-    }, 100, nullptr);
+    }, 200, nullptr);
 }
 
 static void perform_network_scan() {
-    WiFi.mode(WIFI_STA);
-    int n = WiFi.scanNetworks();
+    int n = WiFi.scanComplete();
+    Serial.printf("[WIFI] Scan finished: %d networks after %lu ms\n", n, millis() - scan_started_ms);
     
     networks.clear();
     
@@ -124,6 +161,7 @@ static void perform_network_scan() {
         });
         networks.erase(end, networks.end());
     }
+    WiFi.scanDelete();
     
     scanning = false;
     refresh_network_list();
@@ -155,8 +193,8 @@ static void refresh_network_list() {
         lv_obj_t *btn = lv_btn_create(ssid_list);
         lv_obj_set_width(btn, LV_PCT(100));
         lv_obj_set_height(btn, 50);
-        lv_obj_set_style_bg_color(btn, lv_color_white(), 0);
-        lv_obj_set_style_border_color(btn, lv_palette_main(LV_PALETTE_GREY), 0);
+        lv_obj_set_style_bg_color(btn, palette::card(), 0);
+        lv_obj_set_style_border_color(btn, palette::parchment_dark(), 0);
         lv_obj_set_style_border_width(btn, 1, 0);
         lv_obj_set_style_radius(btn, 6, 0);
         lv_obj_set_style_pad_all(btn, 10, 0);
@@ -164,7 +202,7 @@ static void refresh_network_list() {
         lv_obj_t *ssid_label = lv_label_create(btn);
         lv_label_set_text(ssid_label, network.ssid.c_str());
         lv_obj_set_style_text_font(ssid_label, font14(), 0);
-        lv_obj_set_style_text_color(ssid_label, lv_color_black(), 0);
+        lv_obj_set_style_text_color(ssid_label, palette::ink(), 0);
         lv_obj_align(ssid_label, LV_ALIGN_TOP_LEFT, 0, 0);
         
         String info_text = "";
@@ -188,7 +226,7 @@ static void refresh_network_list() {
         lv_obj_t *info_label = lv_label_create(btn);
         lv_label_set_text(info_label, info_text.c_str());
         lv_obj_set_style_text_font(info_label, font12(), 0);
-        lv_obj_set_style_text_color(info_label, lv_palette_main(LV_PALETTE_GREY), 0);
+        lv_obj_set_style_text_color(info_label, palette::ink_soft(), 0);
         lv_obj_align(info_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
         
         lv_obj_add_event_cb(btn, ssid_network_clicked, LV_EVENT_CLICKED, (void*)i);
@@ -208,9 +246,9 @@ static void ssid_network_clicked(lv_event_t *e) {
         static TextInputConfig *password_config = new TextInputConfig();
         password_config->title = S()->wifi_password_title;
         
-        static String desc_string;
-        desc_string = String("Enter password for ") + selected_ssid;
-        password_config->description = desc_string.c_str();
+        static char desc_buf[96];
+        snprintf(desc_buf, sizeof(desc_buf), S()->wifi_password_prompt, selected_ssid.c_str());
+        password_config->description = desc_buf;
         password_config->initial_text = "";
         password_config->placeholder_text = S()->wifi_password_placeholder;
         password_config->save_text = S()->connect_btn;
@@ -247,9 +285,9 @@ static void connect_to_selected_network(const String& ssid, const String& passwo
     static int connection_attempts = 0;
     connection_attempts = 0;
     
-    lv_timer_t *connection_timer = lv_timer_create([](lv_timer_t *t) {
+    delete_timer(connection_timer);
+    connection_timer = lv_timer_create([](lv_timer_t *t) {
         connection_attempts++;
-        lv_timer_handler();
         
         if (WiFi.status() == WL_CONNECTED) {
             extern bool online_mode;
@@ -264,18 +302,11 @@ static void connect_to_selected_network(const String& ssid, const String& passwo
                 lv_label_set_text(status_label, S()->connected_successfully);
             }
             
-            lv_timer_create([](lv_timer_t *return_timer) {
-                extern void ui_app_before_screen_change();
-                ui_app_before_screen_change();
-                
-                extern void ui_settings_screen_reset();
-                ui_settings_screen_reset();
-                
-                ui_router::show_settings();
-                lv_timer_del(return_timer);
+            delete_timer(connection_timer);
+            return_timer = lv_timer_create([](lv_timer_t *) {
+                // leave_ssid_screen() deletes this timer
+                leave_ssid_screen();
             }, 1500, nullptr);
-            
-            lv_timer_del(t);
             
         } else if (connection_attempts >= 20) {
             if (status_label) {
@@ -283,17 +314,15 @@ static void connect_to_selected_network(const String& ssid, const String& passwo
             }
             
             WiFi.disconnect();
-            lv_timer_del(t);
+            delete_timer(connection_timer);
         } else {
             if (status_label && (connection_attempts % 4 == 0)) {
                 char status_text[128];
-                snprintf(status_text, sizeof(status_text), S()->connection_timeout_countdown, selected_ssid.c_str(), 20 - connection_attempts);
+                snprintf(status_text, sizeof(status_text), S()->connection_timeout_countdown, selected_ssid.c_str(), (20 - connection_attempts) / 2);
                 lv_label_set_text(status_label, status_text);
             }
         }
     }, 500, nullptr);
-    
-    lv_timer_set_repeat_count(connection_timer, -1);
 }
 
 bool ui_wifi_ssid_screen_show() {
@@ -302,7 +331,7 @@ bool ui_wifi_ssid_screen_show() {
     scanning = false;
     
     ssid_screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(ssid_screen, lv_color_white(), 0);
+    lv_obj_set_style_bg_color(ssid_screen, palette::paper(), 0);
     lv_obj_set_style_bg_opa(ssid_screen, LV_OPA_COVER, 0);
     
     ui_header_config_t config = ui_header_config_default(S()->wifi_networks_title, ssid_back_clicked);
@@ -311,7 +340,7 @@ bool ui_wifi_ssid_screen_show() {
     lv_obj_t *main_container = lv_obj_create(ssid_screen);
     lv_obj_set_size(main_container, SCREEN_WIDTH, SCREEN_HEIGHT - 38);
     lv_obj_align(main_container, LV_ALIGN_BOTTOM_MID, 0, 0);
-    lv_obj_set_style_bg_color(main_container, lv_color_white(), 0);
+    lv_obj_set_style_bg_color(main_container, palette::paper(), 0);
     lv_obj_set_style_bg_opa(main_container, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(main_container, 0, 0);
     lv_obj_set_style_pad_all(main_container, 16, 0);
@@ -319,7 +348,7 @@ bool ui_wifi_ssid_screen_show() {
     
     scan_btn = lv_btn_create(main_container);
     lv_obj_set_size(scan_btn, LV_PCT(100), 36);
-    lv_obj_set_style_bg_color(scan_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
+    lv_obj_set_style_bg_color(scan_btn, palette::primary(), 0);
     lv_obj_align(scan_btn, LV_ALIGN_TOP_MID, 0, 0);
     
     lv_obj_t *scan_label = lv_label_create(scan_btn);
@@ -333,7 +362,7 @@ bool ui_wifi_ssid_screen_show() {
     status_label = lv_label_create(main_container);
     lv_label_set_text(status_label, S()->scan_instruction);
     lv_obj_set_style_text_font(status_label, font12(), 0);
-    lv_obj_set_style_text_color(status_label, lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_text_color(status_label, palette::ink_soft(), 0);
     lv_obj_set_width(status_label, LV_PCT(100));
     lv_label_set_long_mode(status_label, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(status_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -350,21 +379,10 @@ bool ui_wifi_ssid_screen_show() {
     lv_obj_set_scroll_dir(ssid_list, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(ssid_list, LV_SCROLLBAR_MODE_ACTIVE);
     
+    // Free the screen we came from; the home and settings views are
+    // rebuilt on a fresh screen when we leave
+    lv_obj_t *old_screen = lv_scr_act();
     lv_scr_load(ssid_screen);
+    lv_obj_delete_async(old_screen);
     return true;
-}
-
-void ui_wifi_ssid_screen_cleanup() {
-    if (ssid_screen) {
-        lv_obj_del(ssid_screen);
-        ssid_screen = nullptr;
-    }
-    
-    ssid_list = nullptr;
-    scan_btn = nullptr;
-    status_label = nullptr;
-    
-    networks.clear();
-    selected_ssid = "";
-    scanning = false;
 }

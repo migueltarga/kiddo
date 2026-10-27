@@ -60,27 +60,42 @@ static const LocalizedStrings strings_en = {
     "Connected successfully!",
     "Connection failed. Check password and try again.",
     "Connecting to %s... (%ds)",
-    "Catalog URL:",
+    "Catalog:",
     "Edit",
     "Catalog URL",
-    "Enter the URL for your story catalog:\n\n(Leave empty to use default)",
+    "Story catalog URL (empty uses the default)",
     "Save",
     "Default",
+    "Kiddo (default)",
     // Story screen strings
     "Leave Story",
-    "Are you sure you want to leave this story?\n\nYour progress will be lost.",
+    "Leave this story?\n\nYou can continue later from here.",
     "Leave",
     "Stay",
     // Inventory strings
     "Inventory",
     "New Item!",
-    "You found a new item!",
     "Item added to inventory.",
     "Choose Item",
+    "Not needed right now.",
+    "Your backpack is empty.",
     // Image loading strings
     "Loading\nImage...",
     "Decode\nFailed",
-    "Load\nFailed"
+    "Load\nFailed",
+    // Toasts and prompts
+    "Catalog updated",
+    "Using default catalog URL",
+    "Enter password for %s",
+    // Resume strings
+    "Welcome back!",
+    "Continue where you left off?",
+    "Continue",
+    "Start over",
+    // Loading strings
+    "Looking for new stories...",
+    "Downloading story...",
+    "Stories to dream about"
 };
 
 static const LocalizedStrings strings_pt = {
@@ -102,7 +117,7 @@ static const LocalizedStrings strings_pt = {
     "Normal",
     "Grande",
     "Ingles",
-    "Portugues",
+    "Português",
     "Falha no download",
     "Tentar buscar online novamente",
     "Nenhum catálogo online",
@@ -130,27 +145,42 @@ static const LocalizedStrings strings_pt = {
     "Conectado com sucesso!",
     "Falha na conexão. Verifique a senha e tente novamente.",
     "Conectando a %s... (%ds)",
-    "URL do Catálogo:",
+    "Catálogo:",
     "Editar",
     "URL do Catálogo",
-    "Digite a URL para seu catálogo de histórias:\n\n(Deixe vazio para usar o padrão)",
+    "URL do catálogo (vazio usa o padrão)",
     "Salvar",
     "Padrão",
+    "Kiddo (padrão)",
     // Story screen strings
     "Sair da História",
-    "Tem certeza que deseja sair desta história?\n\nSeu progresso será perdido.",
+    "Sair desta história?\n\nVocê pode continuar daqui depois.",
     "Sair",
     "Ficar",
     // Inventory strings
     "Inventário",
     "Novo Item!",
-    "Você encontrou um novo item!",
     "Item adicionado ao inventário.",
     "Escolher Item",
+    "Não é necessário agora.",
+    "A mochila está vazia.",
     // Image loading strings
     "Carregando\nImagem...",
     "Falha na\nDecodificação",
-    "Falha no\nCarregamento"
+    "Falha no\nCarregamento",
+    // Toasts and prompts
+    "Catálogo atualizado",
+    "Usando URL padrão do catálogo",
+    "Digite a senha de %s",
+    // Resume strings
+    "Bem-vindo de volta!",
+    "Continuar de onde parou?",
+    "Continuar",
+    "Recomeçar",
+    // Loading strings
+    "Procurando novas histórias...",
+    "Baixando história...",
+    "Histórias para sonhar"
 };
 
 const LocalizedStrings *S()

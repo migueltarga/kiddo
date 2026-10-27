@@ -14,11 +14,6 @@
  */
 void ui_app_show_home();
 
-/**
- * @brief Set story font scale for the application
- * @param scale Font scale value
- */
-void ui_app_set_story_font_scale(uint8_t scale);
 
 /**
  * @brief Refresh home screen labels (for language changes)

@@ -97,6 +97,8 @@
 #define PK_ONLINE_MODE "onmode"
 /** @brief Catalog URL preference key */
 #define PK_CATALOG_URL "caturl"
+/** @brief Catalogs used on this device (JSON list), for picking one again */
+#define PK_CATALOGS "catalogs"
 
 // ---------------- Remote catalog ----------------
 /** @brief Default remote catalog URL */

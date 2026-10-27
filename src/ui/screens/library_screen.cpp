@@ -23,6 +23,7 @@
 #include "ui/components/ui_components.h"
 #include "ui/router.h"
 #include "story_utils.h"
+#include "story_progress.h"
 
 /** @brief Current story index */
 int g_story_idx = -1;
@@ -36,18 +37,10 @@ bool g_remote_fetch_done = false;
 bool g_remote_fetch_failed = false;
 /** @brief Fetch in progress flag */
 bool g_fetch_in_progress = false;
-/** @brief Fetch timer */
-lv_timer_t *g_fetch_timer = nullptr;
-/** @brief Fetch overlay object */
-lv_obj_t *g_fetch_overlay = nullptr;
+/** @brief The story list while the library is on screen, else nullptr */
+static lv_obj_t *g_library_list = nullptr;
 /** @brief Download overlay object */
 lv_obj_t *g_download_overlay = nullptr;
-/** @brief Pending download filename */
-String g_pending_download_file;
-/** @brief Pending download index */
-int g_pending_download_idx = -1;
-/** @brief Download timer */
-lv_timer_t *g_download_timer = nullptr;
 
 #include "i18n.h"
 extern void ui_library_screen_refresh_for_language_change();
@@ -60,40 +53,83 @@ static lv_obj_t* create_loading_overlay(lv_obj_t *parent, const char* message) {
     ui_loading_overlay_config_t config = ui_loading_overlay_config_default(message);
     return ui_loading_overlay_create(parent, &config);
 }
-static bool file_exists_strict(const String &path)
+
+/**
+ * @brief Collect "file|lang" keys for stories already downloaded
+ *
+ * Reads the index once instead of opening every story file.
+ */
+static std::set<String> downloaded_keys()
 {
-	return FileSystem::exists(path) && FileSystem::readFile(path).length() > 0;
+	std::set<String> keys;
+	JsonDocument doc;
+	if (!FileSystem::loadIndex(doc))
+		return keys;
+	for (JsonObject story : doc["stories"].as<JsonArray>())
+	{
+		String file = story["file"] | "";
+		String lang = story["lang"] | "";
+		if (file.length() && FileSystem::fileSize(file) > 0)
+			keys.insert(file + "|" + lang);
+	}
+	return keys;
 }
 
-static void library_fetch_timer_cb(lv_timer_t *t)
+void ui_library_catalog_changed()
 {
-	if (g_remote_fetch_done || g_fetch_in_progress)
+	remote_catalog::invalidate();
+	g_remote_fetch_done = false;
+	g_remote_fetch_failed = false;
+}
+
+void ui_library_prefetch_catalog()
+{
+	if (!online_mode || g_remote_fetch_done || g_fetch_in_progress)
 	{
 		return;
 	}
 	g_fetch_in_progress = true;
-	
+
 	AsyncManager::fetchCatalog([](bool success) {
 		g_remote_fetch_done = true;
 		g_remote_fetch_failed = !success || remote_catalog::entries().empty();
 		g_fetch_in_progress = false;
-		
-		if (g_fetch_overlay)
+
+		// Only redraw if the reader is looking at the library
+		if (g_library_list)
 		{
-			lv_obj_del(g_fetch_overlay);
-			g_fetch_overlay = nullptr;
-		}
-		
-		story::loadFromFS();
-		ui_library_screen_show();
-		
-		if (g_fetch_timer)
-		{
-			lv_timer_del(g_fetch_timer);
-			g_fetch_timer = nullptr;
+			ui_library_screen_show();
 		}
 	});
 }
+
+/**
+ * @brief Add a quiet "looking for new stories" row with a small spinner
+ * @param list Library list
+ */
+static void create_checking_row(lv_obj_t *list)
+{
+	lv_obj_t *row = lv_obj_create(list);
+	lv_obj_remove_style_all(row);
+	lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+	lv_obj_set_style_pad_ver(row, 6, 0);
+	lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+	lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+	lv_obj_set_style_pad_column(row, 8, 0);
+
+	lv_obj_t *spinner = lv_spinner_create(row);
+	lv_obj_set_size(spinner, 18, 18);
+	lv_obj_set_style_arc_width(spinner, 3, LV_PART_MAIN);
+	lv_obj_set_style_arc_width(spinner, 3, LV_PART_INDICATOR);
+	lv_obj_set_style_arc_color(spinner, palette::parchment(), LV_PART_MAIN);
+	lv_obj_set_style_arc_color(spinner, palette::primary(), LV_PART_INDICATOR);
+
+	lv_obj_t *label = lv_label_create(row);
+	lv_label_set_text(label, S()->checking_stories);
+	lv_obj_set_style_text_font(label, font12(), 0);
+	lv_obj_set_style_text_color(label, palette::ink_soft(), 0);
+}
+
 void ui_story_set_home_cb(ui_story_home_cb_t cb) { g_home_cb = cb; }
 
 static void on_back_button_clicked(lv_event_t *e)
@@ -110,7 +146,7 @@ static void on_story_select(lv_event_t *e)
 	}
 	g_story_idx = (int)idx;
 	g_node_key = stories[g_story_idx].start;
-	ui_story_screen_show(stories[g_story_idx], g_node_key);
+	ui_story_screen_open(stories[g_story_idx]);
 }
 static void on_remote_entry(lv_event_t *e)
 {
@@ -119,51 +155,104 @@ static void on_remote_entry(lv_event_t *e)
 	if (ridx < 0 || (size_t)ridx >= ents.size()) {
 		return;
 	}
-	g_pending_download_idx = (int)ridx;
-	g_pending_download_file = ents[ridx].file;
+	String file = ents[ridx].file;
 
 	if (!g_download_overlay)
 	{
 		lv_obj_t *scr = lv_scr_act();
-		g_download_overlay = create_loading_overlay(scr, S()->loading);
+		g_download_overlay = create_loading_overlay(scr, S()->downloading_story);
 	}
 
-	if (g_download_timer)
-	{
-		lv_timer_reset(g_download_timer);
-	}
-	else
-	{
-		String file = g_pending_download_file;
-		g_pending_download_file.clear();
+	AsyncManager::downloadStory(file, [](bool success, const String& storyId) {
+		if (g_download_overlay) {
+			lv_obj_del(g_download_overlay);
+			g_download_overlay = nullptr;
+		}
 		
-		AsyncManager::downloadStory(file, [](bool success, const String& storyId) {
-			if (g_download_overlay) {
-				lv_obj_del(g_download_overlay);
-				g_download_overlay = nullptr;
-			}
-			
-			if (!success) {
-				ui_splash_screen_show(S()->delete_failed);
-				lv_timer_create([](lv_timer_t *tt) {
-					ui_library_screen_show();
-					lv_timer_del(tt);
-				}, 800, nullptr);
-				return;
-			}
-			
-			if (storyId.length()) {
-				story::loadFromFS();
-				const auto &stories = story::all();
-				for (const auto &st : stories) {
-					if (st.id == storyId) {
-						ui_story_screen_show(st, st.start);
-						return;
-					}
+		if (!success) {
+			ui_splash_screen_show(S()->delete_failed);
+			lv_timer_create([](lv_timer_t *tt) {
+				ui_library_screen_show();
+				lv_timer_del(tt);
+			}, 800, nullptr);
+			return;
+		}
+		
+		story::loadFromFS();
+		if (storyId.length()) {
+			for (const auto &st : story::all()) {
+				if (st.id == storyId) {
+					ui_story_screen_show(st, st.start);
+					return;
 				}
 			}
-			ui_library_screen_show();
-		});
+		}
+		ui_library_screen_show();
+	});
+}
+
+/**
+ * @brief Create a story card: round icon, title, and an optional tag line
+ * @param list Library list
+ * @param title Story title
+ * @param symbol LVGL symbol drawn in the icon
+ * @param icon_color Icon background
+ * @param tag Small orange text under the title, or nullptr
+ * @param cb Click handler
+ * @param user_data Click handler data
+ */
+static void create_story_card(lv_obj_t *list, const char *title, const char *symbol, lv_color_t icon_color,
+							  const char *tag, lv_event_cb_t cb, void *user_data)
+{
+	lv_obj_t *card = lv_obj_create(list);
+	ui_add_click_sound(card);
+	lv_obj_set_size(card, LV_PCT(100), LV_SIZE_CONTENT);
+	lv_obj_set_style_min_height(card, 52, 0);
+	lv_obj_set_style_bg_color(card, palette::card(), 0);
+	lv_obj_set_style_bg_color(card, palette::parchment(), LV_STATE_PRESSED);
+	lv_obj_set_style_border_width(card, 1, 0);
+	lv_obj_set_style_border_color(card, palette::parchment_dark(), 0);
+	lv_obj_set_style_radius(card, 12, 0);
+	lv_obj_set_style_pad_all(card, 8, 0);
+	lv_obj_set_style_pad_column(card, 10, 0);
+	lv_obj_set_style_shadow_width(card, 0, 0);
+	lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+	lv_obj_set_flex_flow(card, LV_FLEX_FLOW_ROW);
+	lv_obj_set_flex_align(card, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+	lv_obj_add_event_cb(card, cb, LV_EVENT_CLICKED, user_data);
+
+	lv_obj_t *icon = lv_obj_create(card);
+	lv_obj_remove_style_all(icon);
+	lv_obj_set_size(icon, 36, 36);
+	lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
+	lv_obj_set_style_bg_color(icon, icon_color, 0);
+	lv_obj_set_style_bg_opa(icon, LV_OPA_COVER, 0);
+	lv_obj_clear_flag(icon, LV_OBJ_FLAG_CLICKABLE);
+	lv_obj_t *icon_label = lv_label_create(icon);
+	lv_label_set_text(icon_label, symbol);
+	lv_obj_set_style_text_color(icon_label, lv_color_white(), 0);
+	lv_obj_center(icon_label);
+
+	lv_obj_t *text = lv_obj_create(card);
+	lv_obj_remove_style_all(text);
+	lv_obj_set_height(text, LV_SIZE_CONTENT);
+	lv_obj_set_flex_grow(text, 1);
+	lv_obj_set_flex_flow(text, LV_FLEX_FLOW_COLUMN);
+	lv_obj_set_style_pad_row(text, 2, 0);
+	lv_obj_clear_flag(text, LV_OBJ_FLAG_CLICKABLE);
+
+	lv_obj_t *title_label = lv_label_create(text);
+	lv_obj_set_width(title_label, LV_PCT(100));
+	lv_label_set_long_mode(title_label, LV_LABEL_LONG_WRAP);
+	lv_label_set_text(title_label, title);
+	lv_obj_set_style_text_font(title_label, font16(), 0);
+	lv_obj_set_style_text_color(title_label, palette::ink(), 0);
+
+	if (tag) {
+		lv_obj_t *tag_label = lv_label_create(text);
+		lv_label_set_text(tag_label, tag);
+		lv_obj_set_style_text_font(tag_label, font12(), 0);
+		lv_obj_set_style_text_color(tag_label, palette::primary_dark(), 0);
 	}
 }
 
@@ -173,34 +262,29 @@ void ui_library_screen_show()
 	ui_app_before_screen_change();
 	lv_obj_t *scr = lv_scr_act();
 	lv_obj_clean(scr);
-	g_fetch_overlay = nullptr;
 	const auto *s = S();
 	apply_screen_bg(scr);
-	lv_obj_t *panel = lv_obj_create(scr);
-	lv_obj_set_size(panel, SCREEN_WIDTH, SCREEN_HEIGHT);
-	lv_obj_align(panel, LV_ALIGN_CENTER, 0, 0);
-	lv_obj_set_style_bg_color(panel, lv_color_white(), 0);
-	lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-	lv_obj_set_style_border_width(panel, 0, 0);
-	lv_obj_set_style_pad_all(panel, 0, 0);
 	
 	ui_header_config_t header_config = ui_header_config_default(s->stories_title, on_back_button_clicked);
 	lv_obj_t *header = ui_header_create(scr, &header_config);
 	lv_obj_t *list = lv_obj_create(scr);
-	lv_obj_set_size(list, 240, 262);
-	lv_obj_align_to(list, header, LV_ALIGN_OUT_BOTTOM_MID, 0, 4);
+	g_library_list = list;
+	lv_obj_add_event_cb(list, [](lv_event_t *e) {
+		if (lv_event_get_target(e) == g_library_list)
+			g_library_list = nullptr;
+	}, LV_EVENT_DELETE, nullptr);
+	lv_obj_set_size(list, SCREEN_WIDTH, SCREEN_HEIGHT - 38);
+	lv_obj_align(list, LV_ALIGN_TOP_MID, 0, 38);
 	lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
 	lv_obj_set_style_border_width(list, 0, 0);
 	lv_obj_set_style_outline_width(list, 0, 0);
-	lv_obj_set_style_pad_left(list, 2, 0);
-	lv_obj_set_style_pad_right(list, 2, 0);
-	lv_obj_set_style_pad_top(list, 2, 0);
-	lv_obj_set_style_pad_bottom(list, 2, 0);
-	lv_obj_set_style_pad_row(list, 2, 0);
+	lv_obj_set_style_radius(list, 0, 0);
+	lv_obj_set_style_pad_all(list, 8, 0);
+	lv_obj_set_style_pad_row(list, 8, 0);
 	lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
 	lv_obj_set_scroll_dir(list, LV_DIR_VER);
 	lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
-	lv_obj_set_style_max_height(list, 262, 0);
+	apply_scrollbar_style(list);
 	
 	const auto &storiesNow = story::all();
 	const auto &ents = remote_catalog::entries();
@@ -211,20 +295,16 @@ void ui_library_screen_show()
 	for (size_t i = 0; i < storiesNow.size(); ++i)
 	{
 		const Story_t &st = storiesNow[i];
-		lv_obj_t *btn = lv_btn_create(list);
-		ui_add_click_sound(btn);
-		lv_obj_set_width(btn, LV_PCT(100));
-		lv_obj_set_height(btn, 36);
-		apply_primary_button_style(btn);
-		lv_obj_add_event_cb(btn, on_story_select, LV_EVENT_CLICKED, (void *)i);
-		lv_obj_t *lbl = lv_label_create(btn);
-		lv_label_set_text(lbl, st.title.length() ? st.title.c_str() : st.id.c_str());
-		lv_obj_set_style_text_font(lbl, font16(), 0);
-		lv_obj_center(lbl);
+		story_progress::Saved saved;
+		bool started = story_progress::load(st.id, saved) && saved.node != st.start;
+		create_story_card(list, st.title.length() ? st.title.c_str() : st.id.c_str(),
+						  LV_SYMBOL_PLAY, palette::primary(), started ? s->resume_continue : nullptr,
+						  on_story_select, (void *)i);
 	}
 	
 	if (online_mode) {
 		std::set<String> shown_file_lang;
+		std::set<String> downloaded = downloaded_keys();
 		
 		for (size_t i = 0; i < ents.size(); ++i)
 		{
@@ -237,54 +317,25 @@ void ui_library_screen_show()
 			shown_file_lang.insert(unique_key);
 			String label = ent.name.length() ? ent.name : ent.file;
 			
-			bool found_local = false;
-			String localPath = "/" + ent.file;
-			
-			// Check if file exists and is in the index with matching language
-			if (FileSystem::exists(localPath)) {
-				String payload = FileSystem::readFile(localPath);
-				if (payload.length() > 0) {
-					JsonDocument doc;
-					if (deserializeJson(doc, payload) == DeserializationError::Ok) {
-						String lang = doc["lang"].as<String>();
-						if (lang == ent.lang && FileSystem::indexContains(localPath)) {
-							found_local = true;
-						}
-					}
-				}
-			}
+			bool found_local = downloaded.count("/" + unique_key) > 0;
 			
 			if (!found_local)
 			{
 				any_remote = true;
-				lv_obj_t *btn = lv_btn_create(list);
-				ui_add_click_sound(btn);
-				lv_obj_set_width(btn, LV_PCT(100));
-				lv_obj_set_height(btn, 34);
-				apply_primary_button_style(btn);
-				lv_obj_set_style_bg_color(btn, lv_palette_main(LV_PALETTE_BLUE), 0);
-				lv_obj_add_event_cb(btn, on_remote_entry, LV_EVENT_CLICKED, (void *)i);
-				lv_obj_t *lbl = lv_label_create(btn);
-				lv_label_set_text(lbl, label.c_str());
-				lv_obj_set_style_text_font(lbl, font14(), 0);
-				lv_obj_center(lbl);
+				create_story_card(list, label.c_str(), LV_SYMBOL_DOWNLOAD, palette::accent(), nullptr,
+								  on_remote_entry, (void *)i);
 			}
 		}
 	} else {
 		g_remote_fetch_done = false;
 		g_remote_fetch_failed = false;
-		if (g_fetch_timer) {
-			lv_timer_del(g_fetch_timer);
-			g_fetch_timer = nullptr;
-		}
-		if (g_fetch_overlay) {
-			lv_obj_del(g_fetch_overlay);
-			g_fetch_overlay = nullptr;
-		}
 	}
 	
+	// Local stories show right away; the catalog loads below them
+	bool checking = online_mode && !g_remote_fetch_done;
+	
 	// If nothing to show, display 'no stories' message
-	if (!any_local && !any_remote)
+	if (!any_local && !any_remote && !checking)
 	{
 		// Create a container for the empty state that takes up the full list area
 		lv_obj_t *empty_container = lv_obj_create(list);
@@ -299,14 +350,14 @@ void ui_library_screen_show()
 		lv_obj_t *msg_lbl = lv_label_create(empty_container);
 		lv_label_set_text(msg_lbl, s->no_stories);
 		lv_obj_set_style_text_font(msg_lbl, font14(), 0);
-		lv_obj_set_style_text_color(msg_lbl, lv_palette_main(LV_PALETTE_GREY), 0);
+		lv_obj_set_style_text_color(msg_lbl, palette::ink_soft(), 0);
 		lv_obj_set_style_text_align(msg_lbl, LV_TEXT_ALIGN_CENTER, 0);
 		
 		// Additional helpful text
 		lv_obj_t *help_lbl = lv_label_create(empty_container);
 		lv_label_set_text(help_lbl, online_mode ? s->stories_will_appear : s->enable_online_mode);
 		lv_obj_set_style_text_font(help_lbl, font12(), 0);
-		lv_obj_set_style_text_color(help_lbl, lv_palette_main(LV_PALETTE_GREY), 0);
+		lv_obj_set_style_text_color(help_lbl, palette::ink_soft(), 0);
 		lv_obj_set_style_text_align(help_lbl, LV_TEXT_ALIGN_CENTER, 0);
 		lv_obj_set_style_margin_top(help_lbl, 8, 0);
 		lv_label_set_long_mode(help_lbl, LV_LABEL_LONG_WRAP);
@@ -314,17 +365,10 @@ void ui_library_screen_show()
 	}	// Online mode phased loading with states
 	if (online_mode)
 	{
-		if (!g_remote_fetch_done)
+		if (checking)
 		{
-			// Full-screen overlay with spinner
-			if (!g_fetch_overlay)
-			{
-				g_fetch_overlay = create_loading_overlay(scr, S()->loading);
-			}
-			if (!g_fetch_timer)
-			{
-				g_fetch_timer = lv_timer_create(library_fetch_timer_cb, 50, nullptr);
-			}
+			create_checking_row(list);
+			ui_library_prefetch_catalog();
 		}
 		else if (g_remote_fetch_failed)
 		{
@@ -332,30 +376,24 @@ void ui_library_screen_show()
 			ui_add_click_sound(btn_retry);
 			lv_obj_set_width(btn_retry, LV_PCT(100));
 			lv_obj_set_height(btn_retry, 36);
-			apply_primary_button_style(btn_retry);
-			lv_obj_set_style_bg_color(btn_retry, lv_palette_main(LV_PALETTE_RED), 0);
+			apply_outline_button_style(btn_retry, palette::danger());
 			lv_obj_add_event_cb(btn_retry, [](lv_event_t *e)
 			{
 				g_remote_fetch_done = false;
 				g_remote_fetch_failed = false;
 				remote_catalog::invalidate();
-				if (g_fetch_timer)
-				{
-					lv_timer_del(g_fetch_timer);
-					g_fetch_timer = nullptr;
-				}
 				ui_library_screen_show();
 			}, LV_EVENT_CLICKED, nullptr);
 			lv_obj_t *lblr = lv_label_create(btn_retry);
-			lv_label_set_text(lblr, S()->retry_online_fetch);
+			lv_label_set_text_fmt(lblr, LV_SYMBOL_REFRESH "  %s", S()->retry_online_fetch);
 			lv_obj_center(lblr);
 		}
 		else
 		{
+			// reconcileExisting() reloads the story list when it adds anything
 			int newly = remote_catalog::reconcileExisting();
 			if (newly > 0)
 			{
-				story::loadFromFS();
 				ui_library_screen_show();
 				return;
 			}

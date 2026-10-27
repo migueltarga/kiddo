@@ -36,6 +36,22 @@ using ui_story_home_cb_t = void (*)();
 void ui_library_screen_show();
 
 /**
+ * @brief Start loading the online catalog in the background
+ *
+ * Does nothing offline or when the catalog is already loaded. Safe to call
+ * before the library is shown (e.g. at boot); the library redraws itself
+ * with the results only if it is on screen.
+ */
+void ui_library_prefetch_catalog();
+
+/**
+ * @brief Forget the fetched catalog after the catalog URL or language changed
+ *
+ * The library fetches it again the next time it is shown.
+ */
+void ui_library_catalog_changed();
+
+/**
  * @brief Set home callback for story screens
  * @param cb Home callback function
  */
@@ -47,10 +63,6 @@ void ui_story_set_home_cb(ui_story_home_cb_t cb);
  */
 void ui_settings_screen_show();
 
-/**
- * @brief Reset settings screen state
- */
-void ui_settings_screen_reset();
 
 // WiFi SSID Selection
 /**
@@ -59,10 +71,6 @@ void ui_settings_screen_reset();
  */
 bool ui_wifi_ssid_screen_show();
 
-/**
- * @brief Clean up WiFi SSID screen resources
- */
-void ui_wifi_ssid_screen_cleanup();
 
 // Splash
 /**
@@ -80,6 +88,8 @@ void ui_splash_screen_show(const char *msg = nullptr);
 void ui_story_screen_show(const Story_t &story, const String &nodeKey);
 
 /**
- * @brief Refresh story screen display
+ * @brief Open a story, offering to continue from its saved place
+ * @param story Story summary to open
  */
-void ui_story_screen_refresh();
+void ui_story_screen_open(const Story_t &story);
+

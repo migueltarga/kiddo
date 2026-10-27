@@ -1,0 +1,572 @@
+{
+  "id": "zoe_lua_perdida",
+  "title": "Zoe e a Lua Perdida",
+  "start": "inicio",
+  "has_inventory": true,
+  "night": true,
+  "item_definitions": [
+    {
+      "id": "flashlight",
+      "name": "Lanterna",
+      "description": "Uma lanterna que acende no escuro."
+    },
+    {
+      "id": "honey",
+      "name": "Mel",
+      "description": "Um pote de mel docinho. Tem bicho que adora!"
+    },
+    {
+      "id": "map",
+      "name": "Mapa do Pipoca",
+      "description": "Um mapa secreto da floresta, desenhado pelo esquilo."
+    },
+    {
+      "id": "key",
+      "name": "Chave Dourada",
+      "description": "Abre um portão lá na Montanha."
+    },
+    {
+      "id": "feather",
+      "name": "Pena Brilhante",
+      "description": "Uma pena da Coruja que brilha no escuro."
+    },
+    {
+      "id": "potion",
+      "name": "Poção de Brilho",
+      "description": "Uma garrafinha de luz dourada. Devolve o brilho de quem perdeu."
+    },
+    {
+      "id": "shell",
+      "name": "Concha Cantora",
+      "description": "Encoste no ouvido: ela toca a música do mar."
+    }
+  ],
+  "characters": {
+    "Pipoca": "squirrel"
+  },
+  "nodes": {
+    "inicio": {
+      "text": "Era hora de dormir, mas Zoe olhou pela janela e levou um susto: a Lua tinha sumido do céu!\nDe repente, Ted, seu ursinho, piscou um olho e falou: 'Zoe, de noite eu também falo!\nOlha lá fora: um rastro de pozinho brilhante. Vamos achar a Lua?'",
+      "choices": [
+        {
+          "text": "Arrumar a mochila primeiro",
+          "next": "cozinha"
+        },
+        {
+          "text": "Correr atrás do pozinho",
+          "next": "quintal"
+        }
+      ]
+    },
+    "cozinha": {
+      "text": "Na cozinha, em cima da mesa, Zoe encontrou uma lanterna e um pote de mel.\nTed lembrou: 'A mamãe sempre diz para levar só o que a gente precisa. Qual vamos levar?'",
+      "cast": [
+        "zoe",
+        "ted"
+      ],
+      "choices": [
+        {
+          "text": "Levar a lanterna",
+          "next": "quintal",
+          "gives_item": "flashlight"
+        },
+        {
+          "text": "Levar o pote de mel",
+          "next": "quintal",
+          "gives_item": "honey"
+        },
+        {
+          "text": "Levar os dois!",
+          "next": "cozinha_pesado"
+        }
+      ]
+    },
+    "cozinha_pesado": {
+      "text": "Zoe tentou segurar as duas coisas, mas o pote de mel quase escorregou!\nTed riu: 'Uma só, Zoe! Vamos escolher com calma.'",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Escolher de novo",
+          "next": "cozinha"
+        }
+      ]
+    },
+    "quintal": {
+      "text": "O pozinho brilhante passava pelo quintal. Em cima da cerca, o esquilo Pipoca chorava baixinho.\n'Perdi minhas nozes pelo quintal! Quem me ajudar a achar ganha um presente.'",
+      "choices": [
+        {
+          "text": "Ajudar o Pipoca",
+          "next": "nozes"
+        },
+        {
+          "text": "Seguir o pozinho até a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "nozes": {
+      "text": "Zoe e Ted procuraram por todo lado.\nAcharam uma noz no balanço, uma noz dentro do regador e uma noz na bota do papai.\nQuantas nozes eles acharam?",
+      "cast": [
+        "squirrel",
+        "zoe",
+        "ted"
+      ],
+      "choices": [
+        {
+          "text": "Duas",
+          "next": "nozes_errou"
+        },
+        {
+          "text": "Três",
+          "next": "nozes_acertou"
+        },
+        {
+          "text": "Cinco",
+          "next": "nozes_errou"
+        }
+      ]
+    },
+    "nozes_errou": {
+      "text": "Ted contou nos dedinhos: 'Uma no balanço... uma no regador... uma na bota...'\nHmm, vamos contar de novo, bem devagar?",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Contar de novo",
+          "next": "nozes"
+        }
+      ]
+    },
+    "nozes_acertou": {
+      "text": "Três nozes! Pipoca deu pulinhos de alegria.\n'Obrigado! Escolha seu presente: um mapa secreto da floresta, ou uma chave dourada que abre um portão lá na Montanha.'",
+      "scene": "garden",
+      "sound": "success",
+      "choices": [
+        {
+          "text": "Escolher o mapa",
+          "next": "floresta",
+          "gives_item": "map"
+        },
+        {
+          "text": "Escolher a chave dourada",
+          "next": "floresta",
+          "gives_item": "key"
+        }
+      ]
+    },
+    "floresta": {
+      "text": "A floresta estava escura e cheia de barulhinhos: cri-cri, uuh-uuh, splash!\nO pozinho brilhante se espalhou por vários caminhos. Para onde Zoe vai?",
+      "choices": [
+        {
+          "text": "Abrir o mapa do Pipoca",
+          "next": "atalho",
+          "required_item": "map",
+          "hidden_without_item": true
+        },
+        {
+          "text": "Entrar na caverna",
+          "next": "caverna"
+        },
+        {
+          "text": "Visitar a árvore da Coruja",
+          "next": "coruja"
+        },
+        {
+          "text": "Atravessar a ponte do rio",
+          "next": "ponte"
+        }
+      ]
+    },
+    "atalho": {
+      "text": "Zoe abriu o mapa e... uau! O desenho virou pozinho dourado e mostrou um túnel secreto atrás de uma árvore.\nO túnel subia, subia, subia... até o alto da Montanha!",
+      "choices": [
+        {
+          "text": "Sair do túnel",
+          "next": "topo"
+        }
+      ]
+    },
+    "caverna": {
+      "text": "Na entrada da caverna estava tão escuro que Ted segurou forte a mão de Zoe.\n'Lá no fundo tem alguma coisa brilhando... mas não dá para ver o caminho!'",
+      "choices": [
+        {
+          "text": "Acender a lanterna",
+          "next": "caverna_lanterna",
+          "required_item": "flashlight"
+        },
+        {
+          "text": "Usar a pena brilhante",
+          "next": "caverna_pena",
+          "required_item": "feather",
+          "hidden_without_item": true
+        },
+        {
+          "text": "Voltar para a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "caverna_lanterna": {
+      "text": "Zoe acendeu a lanterna e a caverna se encheu de cristais coloridos!\nUns vagalumes bebês, que tinham medo do escuro, chegaram pertinho. Zoe deixou a lanterna acesa com eles.",
+      "choices": [
+        {
+          "text": "Ir até o brilho",
+          "next": "cristais"
+        }
+      ]
+    },
+    "caverna_pena": {
+      "text": "Zoe ergueu a pena da Coruja e ela brilhou como uma estrelinha.\nA pena flutuou na frente deles, iluminando o caminho até o fundo da caverna.",
+      "choices": [
+        {
+          "text": "Ir até o brilho",
+          "next": "cristais"
+        }
+      ]
+    },
+    "cristais": {
+      "text": "No fundo da caverna, um cristal grandão falou com voz de sino: 'Plim! Quem acertar minha adivinha ganha a Poção de Brilho.\nSou amarelo e redondo, apareço de dia e esquento a praia. Quem sou eu?'",
+      "choices": [
+        {
+          "text": "O Sol",
+          "next": "pocao"
+        },
+        {
+          "text": "Uma banana",
+          "next": "cristais_banana"
+        },
+        {
+          "text": "A Lua",
+          "next": "cristais_lua"
+        }
+      ]
+    },
+    "cristais_banana": {
+      "text": "O cristal deu risada: 'Plim-plim-plim! A banana é amarela, mas não fica lá no céu!'\nTed riu tanto que caiu sentado.",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Pensar de novo",
+          "next": "cristais"
+        }
+      ]
+    },
+    "cristais_lua": {
+      "text": "'Quase!', disse o cristal. 'A Lua aparece de noite. Eu apareço de dia e sou bem quentinho.'",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Pensar de novo",
+          "next": "cristais"
+        }
+      ]
+    },
+    "pocao": {
+      "text": "'É o Sol!', gritou Zoe. 'Plim! Acertou!'\nO cristal soltou uma garrafinha cheia de luz dourada: a Poção de Brilho.\n'Ela devolve o brilho de quem perdeu', disse o cristal.",
+      "sound": "success",
+      "gives_item": "potion",
+      "choices": [
+        {
+          "text": "Voltar para a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "coruja": {
+      "text": "Na árvore mais alta morava Dona Coruja, de óculos redondos.\n'Uuh-uuh! Eu vi a Lua passar! Mas só conto se você completar minhas folhas:\nverde, amarela, verde, amarela, verde... e agora?'",
+      "choices": [
+        {
+          "text": "Verde",
+          "next": "coruja_errou"
+        },
+        {
+          "text": "Amarela",
+          "next": "coruja_acertou"
+        },
+        {
+          "text": "Azul",
+          "next": "coruja_errou"
+        }
+      ]
+    },
+    "coruja_errou": {
+      "text": "'Uuh, quase!' A Coruja apontou as folhas, uma por uma.\nZoe e Ted falaram bem alto junto com ela: 'verde, amarela, verde, amarela, verde...'",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Tentar de novo",
+          "next": "coruja"
+        }
+      ]
+    },
+    "coruja_acertou": {
+      "text": "'Amarela! Muito bem!' A Coruja bateu as asas.\n'A Lua perdeu o brilho e subiu, tristinha, para o alto da Montanha. Leve algo que brilhe para ela!'\nE deu para Zoe uma pena que brilha no escuro.",
+      "scene": "forest",
+      "sound": "success",
+      "gives_item": "feather",
+      "choices": [
+        {
+          "text": "Voltar para a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "ponte": {
+      "text": "Na ponte do rio, um urso enorme dormia bem no meio do caminho: RONC... RONC...\nDo outro lado, Zoe via um lago e, lá longe, a Montanha.",
+      "choices": [
+        {
+          "text": "Oferecer o pote de mel",
+          "next": "ponte_mel",
+          "required_item": "honey"
+        },
+        {
+          "text": "Fazer cócegas com a pena",
+          "next": "ponte_pena",
+          "required_item": "feather",
+          "hidden_without_item": true
+        },
+        {
+          "text": "Passar na pontinha dos pés",
+          "next": "ponte_pes"
+        },
+        {
+          "text": "Voltar para a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "ponte_mel": {
+      "text": "O urso farejou... snif, snif... e abriu os olhos: 'Mel! Meu favorito!'\nEle abraçou o pote, agradeceu e deu espaço para Zoe e Ted passarem.",
+      "choices": [
+        {
+          "text": "Atravessar a ponte",
+          "next": "lago"
+        }
+      ]
+    },
+    "ponte_pena": {
+      "text": "Zoe fez cosquinha no nariz do urso com a pena. 'Ha-ha-ha... ATCHIM!'\nO urso acordou rindo, ficou com a pena para fazer cócegas na barriga e deixou eles passarem.",
+      "scene": "lake",
+      "choices": [
+        {
+          "text": "Atravessar a ponte",
+          "next": "lago"
+        }
+      ]
+    },
+    "ponte_pes": {
+      "text": "Zoe foi devagarinho, na pontinha dos pés... mas Ted espirrou: ATCHIM!\nO urso acordou e bocejou: 'Uaaah! Só deixo passar quem acertar minha adivinha.'",
+      "scene": "lake",
+      "choices": [
+        {
+          "text": "Ouvir a adivinha",
+          "next": "urso_adivinha"
+        }
+      ]
+    },
+    "urso_adivinha": {
+      "text": "O urso coçou a barriga e perguntou: 'Qual é o bicho que faz MUUU?'",
+      "scene": "lake",
+      "choices": [
+        {
+          "text": "O gato",
+          "next": "urso_errou"
+        },
+        {
+          "text": "A vaca",
+          "next": "urso_acertou"
+        },
+        {
+          "text": "O pato",
+          "next": "urso_errou"
+        }
+      ]
+    },
+    "urso_errou": {
+      "text": "O urso riu tanto que a ponte balançou!\n'Esse bicho não faz MUUU! Pense de novo.'",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Pensar de novo",
+          "next": "urso_adivinha"
+        }
+      ]
+    },
+    "urso_acertou": {
+      "text": "'A vaca!', disse Zoe. 'MUUU!', imitou Ted.\nO urso gargalhou e saiu do caminho: 'Boa sorte, pequenos!'",
+      "sound": "success",
+      "choices": [
+        {
+          "text": "Atravessar a ponte",
+          "next": "lago"
+        }
+      ]
+    },
+    "lago": {
+      "text": "O lago estava quietinho. Sem a Lua, a água parecia triste.\nNa beira, um sapinho de chapéu guardava uma concha cor-de-rosa que cantava baixinho.",
+      "choices": [
+        {
+          "text": "Falar com o sapinho",
+          "next": "sapo"
+        },
+        {
+          "text": "Seguir para a Montanha",
+          "next": "montanha"
+        },
+        {
+          "text": "Voltar para a floresta",
+          "next": "floresta"
+        }
+      ]
+    },
+    "sapo": {
+      "text": "'Croac! Essa concha guarda a música do mar', disse o sapinho.\n'Ela é sua se você acertar: qual destas coisas boia na água?'",
+      "scene": "lake",
+      "props": [],
+      "choices": [
+        {
+          "text": "Uma pedra",
+          "next": "sapo_errou"
+        },
+        {
+          "text": "Uma folha",
+          "next": "sapo_acertou"
+        },
+        {
+          "text": "Uma panela de ferro",
+          "next": "sapo_errou"
+        }
+      ]
+    },
+    "sapo_errou": {
+      "text": "Zoe jogou na água e... TIBUM! Afundou!\nO sapinho riu: 'Croac! Coisa pesada afunda. Tente de novo!'",
+      "scene": "lake",
+      "props": [],
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Tentar de novo",
+          "next": "sapo"
+        }
+      ]
+    },
+    "sapo_acertou": {
+      "text": "Zoe colocou uma folha na água e ela ficou boiando, igual a um barquinho.\n'Croac! Acertou!' O sapinho entregou a concha. Quando Zoe encostou no ouvido, ouviu uma música linda.",
+      "scene": "lake",
+      "props": [],
+      "sound": "success",
+      "gives_item": "shell",
+      "choices": [
+        {
+          "text": "Seguir para a Montanha",
+          "next": "montanha"
+        }
+      ]
+    },
+    "montanha": {
+      "text": "Ao pé da Montanha havia um portão enorme, com uma fechadura dourada.\nAo lado, uma escadona subia até as nuvens.",
+      "choices": [
+        {
+          "text": "Abrir o portão com a chave",
+          "next": "portao",
+          "required_item": "key"
+        },
+        {
+          "text": "Subir a escadona",
+          "next": "escada"
+        }
+      ]
+    },
+    "portao": {
+      "text": "Zoe girou a chave dourada: CLIC! O portão abriu.\nLá dentro, um elevador de folhas levou Zoe e Ted até o alto, rapidinho.",
+      "choices": [
+        {
+          "text": "Chegar no topo",
+          "next": "topo"
+        }
+      ]
+    },
+    "escada": {
+      "text": "Eram muuuitos degraus! No meio do caminho, um carneirinho fofo estava sentado.\n'Méééé! Só passa quem souber: quantas patinhas eu tenho?'",
+      "choices": [
+        {
+          "text": "Duas",
+          "next": "escada_errou"
+        },
+        {
+          "text": "Quatro",
+          "next": "escada_acertou"
+        },
+        {
+          "text": "Seis",
+          "next": "escada_errou"
+        }
+      ]
+    },
+    "escada_errou": {
+      "text": "Ted se abaixou e contou as patinhas do carneirinho: 'Uma, duas... três, quatro!'\n'Méééé! Conte comigo de novo', disse o carneirinho.",
+      "sound": "oops",
+      "choices": [
+        {
+          "text": "Tentar de novo",
+          "next": "escada"
+        }
+      ]
+    },
+    "escada_acertou": {
+      "text": "'Quatro!' O carneirinho deu um pulo de alegria e chamou uma nuvem fofinha.\nZoe e Ted subiram nela e flutuaram até o topo.",
+      "sound": "success",
+      "choices": [
+        {
+          "text": "Chegar no topo",
+          "next": "topo"
+        }
+      ]
+    },
+    "topo": {
+      "text": "No alto da Montanha, a Lua estava sentadinha numa nuvem, toda apagadinha.\n'Eu perdi meu brilho', ela chorou. 'Fiquei com vergonha de voltar para o céu.'\nTed cochichou: 'Zoe, será que tem algo na mochila que pode ajudar?'",
+      "inventory_choice": true,
+      "correct_item": "potion",
+      "success_next": "final_brilho",
+      "failure_next": "topo_errou",
+      "choices": [
+        {
+          "text": "Tocar a concha para ela",
+          "next": "final_musica",
+          "required_item": "shell",
+          "hidden_without_item": true
+        },
+        {
+          "text": "Dar um abraço bem apertado",
+          "next": "final_abraco"
+        }
+      ]
+    },
+    "topo_errou": {
+      "text": "A Lua olhou com carinho e disse obrigada, mas continuou apagadinha.\n'Que bonito! Mas eu preciso de um brilho que fique dentro de mim.'",
+      "choices": [
+        {
+          "text": "Tentar outra coisa",
+          "next": "topo"
+        }
+      ]
+    },
+    "final_brilho": {
+      "text": "Zoe deu a Poção de Brilho para a Lua. Ela bebeu um golinho e... PLIM!\nA Lua acendeu inteirinha, prateada e linda, e subiu para o céu iluminando a floresta toda.\nNum raio de luar, ela levou Zoe e Ted de volta para a cama. 'Obrigada, amiguinhos. Boa noite!'",
+      "scene": "bedroom",
+      "end": true
+    },
+    "final_musica": {
+      "text": "Zoe encostou a concha na Lua e a música do mar tocou: shhh... shhh...\nA Lua começou a dançar, girando, girando... e a cada giro ficava mais brilhante!\nEla voltou para o céu cantarolando, e Zoe e Ted dormiram ouvindo o mar.",
+      "scene": "sky",
+      "end": true
+    },
+    "final_abraco": {
+      "text": "Zoe abraçou a Lua bem apertado, e Ted abraçou também.\nAos pouquinhos, a Lua foi ficando quentinha... e começou a brilhar!\n'Eu achei que tinha perdido meu brilho', disse ela, 'mas ele volta quando a gente tem amigos.'\nA Lua voltou para o céu, e Zoe dormiu sorrindo.",
+      "cast": [
+        "zoe",
+        "ted"
+      ],
+      "end": true
+    }
+  }
+}

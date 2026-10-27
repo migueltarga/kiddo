@@ -13,6 +13,7 @@ struct InventoryItem_t
     String id;      /**< Unique identifier for the item */
     String name;    /**< Display name of the item */
     String icon;    /**< URL or path to icon image */
+    String description; /**< Description shown when the item is tapped */
 
     /**
      * @brief Default constructor
@@ -24,9 +25,10 @@ struct InventoryItem_t
      * @param item_id Unique identifier
      * @param item_name Display name
      * @param item_icon Icon path/URL (optional)
+     * @param item_desc Description (optional)
      */
-    InventoryItem_t(const String& item_id, const String& item_name, const String& item_icon = "")
-        : id(item_id), name(item_name), icon(item_icon) {}
+    InventoryItem_t(const String& item_id, const String& item_name, const String& item_icon = "", const String& item_desc = "")
+        : id(item_id), name(item_name), icon(item_icon), description(item_desc) {}
 
     /**
      * @brief Check if item is empty
@@ -84,6 +86,12 @@ struct Node_t
     bool is_end;                    /**< True if this is the story end */
     std::vector<Choice_t> choices;  /**< Available choices from this node */
     String gives_item;              /**< Item ID to add to inventory on entry */
+    String scene;                   /**< Picture for a page without one; empty picks it from the text */
+    std::vector<String> cast;       /**< Figures on the scene ("mom", "dog"...), when cast_set */
+    bool cast_set = false;          /**< The page lists its cast (even none); otherwise it comes from the text */
+    std::vector<String> props;      /**< Things on the scene ("ball", "cake"...), when props_set */
+    bool props_set = false;         /**< The page lists its props (even none); otherwise they come from the text */
+    String sound;                   /**< Sound effect played when the page opens ("success", "oops"...) */
 
     // Inventory choice fields
     bool inventory_choice;     /**< True if node shows inventory for selection */
@@ -100,7 +108,12 @@ struct Story_t
     String id;                              /**< Unique story identifier */
     String title;                           /**< Story title */
     String start;                           /**< ID of starting node */
+    String file;                            /**< SPIFFS path the story was loaded from */
     bool has_inventory;                     /**< True if story uses inventory system */
+    bool night = false;                     /**< Happens at night: scenes are shown dark */
+    std::vector<String> cast;               /**< Figures on every scene, when cast_set (the heroes) */
+    bool cast_set = false;                  /**< Otherwise Zoe and Ted, if the story names them */
+    std::vector<std::pair<String, String>> characters;  /**< Name in the text -> figure ("Bela Maria" -> "girl") */
     std::vector<ItemDefinition_t> item_definitions;     /**< All item definitions */
     std::vector<InventoryItem_t> initial_inventory;     /**< Starting inventory */
     std::vector<std::pair<String, Node_t>> nodes;       /**< Story nodes (ID -> Node) */

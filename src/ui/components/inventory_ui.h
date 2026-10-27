@@ -11,6 +11,7 @@
 #include <lvgl.h>
 #include <functional>
 #include "inventory_manager.h"
+#include "styles.h"
 
 namespace InventoryUI {
 
@@ -19,45 +20,47 @@ namespace InventoryUI {
  */
 struct InventoryDialogConfig {
     const char* title = nullptr;  /**< Dialog title (uses localized string if null) */
-    lv_color_t bg_color = lv_color_hex(0xf5f5dc);  /**< Background color */
-    lv_color_t slot_color = lv_color_hex(0xe9d4a9);  /**< Inventory slot color */
-    lv_color_t slot_border_color = lv_color_hex(0x8b7355);  /**< Slot border color */
-    std::function<void()> on_close = nullptr;  /**< Close callback */
-
+    lv_color_t bg_color = palette::paper();  /**< Background color */
+    lv_color_t slot_color = palette::parchment();  /**< Inventory slot color */
+    lv_color_t slot_border_color = palette::brown();  /**< Slot border color */
     bool show_for_choice = false;  /**< Whether showing for item choice */
     std::function<void(const InventoryItem_t&)> choice_callback = nullptr;  /**< Choice callback */
 };
 
 /**
- * @brief Configuration for item notification
+ * @brief Show the inventory dialog
+ * @param config Dialog configuration
+ * @return The dialog's modal background
  */
-struct ItemNotificationConfig {
-    const char* title = nullptr;  /**< Notification title (uses localized string if null) */
-    const char* message = nullptr;  /**< Notification message (uses localized string if null) */
-    const char* item_name = "";  /**< Item name for display */
-    const char* item_id = "";  /**< Item ID for local image lookup */
-    lv_color_t bg_color = lv_color_hex(0xf0f8ff);  /**< Background color */
-    lv_color_t accent_color = lv_color_hex(0x4682b4);  /**< Accent color */
-    uint32_t auto_close_ms = 3000;  /**< Auto-close delay in milliseconds */
-    std::function<void()> on_close = nullptr;  /**< Close callback */
-};
-
 lv_obj_t* showInventoryDialog(const InventoryDialogConfig& config = InventoryDialogConfig{});
 
 /**
- * @brief Create and show item notification dialog
- * @param item_name Display name of the item
- * @param item_id ID for local image lookup (optional)
- * @param custom_message Custom message (optional)
+ * @brief Create the header button that toggles the inventory dialog
+ * @param parent Header object
+ * @return The button
  */
-void showItemNotification(const char* item_name, const char* item_id = nullptr, const char* custom_message = nullptr);
-
 lv_obj_t* createInventoryButton(lv_obj_t* parent);
 
+/**
+ * @brief Rebuild the inventory dialog if it is open
+ */
 void updateInventoryDisplay();
 
-void notifyItemAdded(const InventoryItem_t& item, bool play_sound = true);
+/**
+ * @brief Create the "you found an item" card shown in a story page
+ *
+ * Placed after the page's text, so the reader meets the item where the story
+ * mentions it instead of in a popup before reading.
+ *
+ * @param parent Page content
+ * @param item Item that was added
+ * @return The card
+ */
+lv_obj_t* createFoundItemCard(lv_obj_t* parent, const InventoryItem_t& item);
 
+/**
+ * @brief Close the inventory dialog
+ */
 void cleanup();
 
 }

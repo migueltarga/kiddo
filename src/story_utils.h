@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include <ArduinoJson.h>
-#include <String.h>
+#include <Arduino.h>
 #include "i18n.h"
 
 namespace story_utils
@@ -35,35 +34,5 @@ bool shouldShowContent(const String& contentLang);
  * @return Current language as string
  */
 String currentLanguageToString();
-
-/**
- * @brief Load the story index from file
- * @param doc JsonDocument to fill with index data
- * @return True if loading was successful
- */
-bool loadIndex(JsonDocument& doc);
-
-/**
- * @brief Save the story index to file
- * @param doc JsonDocument containing index data
- * @return True if saving was successful
- */
-bool saveIndex(const JsonDocument& doc);
-
-/**
- * @brief Check if index contains a specific file
- * @param file Filename to check
- * @return True if file is in index
- */
-bool indexContains(const String& file);
-
-/**
- * @brief Add a file to the story index
- * @param file Filename to add
- * @param name Display name of the story
- * @param lang Language of the story
- * @return True if addition was successful
- */
-bool addToIndex(const String& file, const String& name, const String& lang);
 
 }

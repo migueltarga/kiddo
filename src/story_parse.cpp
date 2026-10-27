@@ -9,22 +9,36 @@
 #include "story_engine.h"
 #include "models.h"
 #include <ArduinoJson.h>
+#include <SPIFFS.h>
 
 namespace story
 {
 
 /**
- * @brief Parse story JSON string into Story_t structure
- * @param json JSON string containing story data
+ * @brief Read a list of names ("cast": ["mom", "dog"])
+ * @return True if the list is there, even empty
+ */
+static bool parseNames(JsonVariant value, std::vector<String> &out)
+    {
+        out.clear();
+        if (!value.is<JsonArray>())
+            return false;
+        for (JsonVariant name : value.as<JsonArray>())
+        {
+            if (name.is<const char *>())
+                out.push_back(name.as<const char *>());
+        }
+        return true;
+    }
+
+/**
+ * @brief Parse a deserialized story document into Story_t structure
+ * @param doc JSON document containing story data
  * @param out Story_t structure to fill
  * @return True if parsing was successful
  */
-bool parseStoryJson(const String &json, Story_t &out)
+static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
     {
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, json);
-        if (err)
-            return false;
         out.id = doc["id"].as<const char *>();
         out.title = doc["title"].as<const char *>();
         out.start = doc["start"].as<const char *>();
@@ -33,8 +47,18 @@ bool parseStoryJson(const String &json, Story_t &out)
             
         // Parse inventory settings
         out.has_inventory = doc["has_inventory"].is<bool>() ? (bool)doc["has_inventory"] : false;
+        out.night = doc["night"].is<bool>() ? (bool)doc["night"] : false;
+        out.cast_set = parseNames(doc["cast"], out.cast);
+        out.characters.clear();
+        if (doc["characters"].is<JsonObject>()) {
+            for (JsonPair kv : doc["characters"].as<JsonObject>()) {
+                if (kv.value().is<const char *>())
+                    out.characters.push_back({kv.key().c_str(), kv.value().as<const char *>()});
+            }
+        }
         out.initial_inventory.clear();
         out.item_definitions.clear();
+        out.nodes.clear();
         
         // Parse item definitions first
         if (out.has_inventory && doc["item_definitions"].is<JsonArray>()) {
@@ -62,6 +86,7 @@ bool parseStoryJson(const String &json, Story_t &out)
                     inv_item.id = item_def->id;
                     inv_item.name = item_def->name;
                     inv_item.icon = item_def->icon_url;
+                    inv_item.description = item_def->description;
                     out.initial_inventory.push_back(inv_item);
                 } else {
                     Serial.printf("Item definition not found for initial inventory item: %s\n", item_id.c_str());
@@ -79,6 +104,10 @@ bool parseStoryJson(const String &json, Story_t &out)
             nn.text = normalizeText(n["text"].as<const char *>());
             nn.is_end = n["end"].is<bool>() ? (bool)n["end"] : false;
             nn.gives_item = n["gives_item"].is<const char *>() ? n["gives_item"].as<const char *>() : "";
+            nn.scene = n["scene"].is<const char *>() ? n["scene"].as<const char *>() : "";
+            nn.cast_set = parseNames(n["cast"], nn.cast);
+            nn.props_set = parseNames(n["props"], nn.props);
+            nn.sound = n["sound"].is<const char *>() ? n["sound"].as<const char *>() : "";
             
             // Parse inventory choice fields
             nn.inventory_choice = n["inventory_choice"].is<bool>() ? (bool)n["inventory_choice"] : false;
@@ -103,5 +132,28 @@ bool parseStoryJson(const String &json, Story_t &out)
             out.nodes.push_back({key, nn});
         }
         return true;
+    }
+
+bool parseStoryJson(const String &json, Story_t &out)
+    {
+        JsonDocument doc;
+        if (deserializeJson(doc, json))
+            return false;
+        return parseStoryDoc(doc, out);
+    }
+
+bool load(const Story_t &summary, Story_t &out)
+    {
+        File file = SPIFFS.open(summary.file, "r");
+        if (!file)
+            return false;
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, file);
+        file.close();
+        if (err)
+            return false;
+        out = Story_t();
+        out.file = summary.file;
+        return parseStoryDoc(doc, out);
     }
 }

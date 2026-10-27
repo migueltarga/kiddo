@@ -19,17 +19,37 @@ namespace audio {
  */
 void init();
 
-/**
- * @brief Update audio system state
- * Should be called regularly from the main loop
- */
-void update();
+
+/** @brief Sound effects, synthesized as they play */
+enum class Sound : uint8_t {
+    Click,      /**< Button press */
+    Boing,      /**< Something jumps */
+    Chime,      /**< An item was found */
+    Success,    /**< A right answer */
+    Oops,       /**< A wrong answer, gently */
+    Page,       /**< A soft swish */
+    Fanfare     /**< The story ended */
+};
 
 /**
  * @brief Play a click sound effect
  * Used for UI button interactions
  */
 void play_click();
+
+/**
+ * @brief Queue a sound effect; returns at once
+ *
+ * Sounds play one after another; when several are already waiting, the new
+ * one is dropped rather than playing late.
+ */
+void play(Sound sound);
+
+/**
+ * @brief Find a sound by the name stories use ("success", "oops", "chime"...)
+ * @return True if the name is known
+ */
+bool sound_from_name(const String& name, Sound& out);
 
 }
 

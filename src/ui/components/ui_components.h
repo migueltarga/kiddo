@@ -11,6 +11,7 @@
 
 #include <lvgl.h>
 #include <functional>
+#include "styles.h"
 
 /**
  * @brief Background component configuration
@@ -99,10 +100,11 @@ struct ConfirmationConfig {
     const char* message;                  /**< Dialog message */
     const char* confirm_text;             /**< Confirm button text */
     const char* cancel_text;              /**< Cancel button text */
-    lv_color_t confirm_color = lv_palette_main(LV_PALETTE_RED);     /**< Confirm button color */
+    lv_color_t confirm_color = palette::danger();                   /**< Confirm button color */
     lv_color_t confirm_text_color = lv_color_white();               /**< Confirm button text color */
     std::function<void()> on_confirm = nullptr;                     /**< Confirm callback */
     std::function<void()> on_cancel = nullptr;                      /**< Cancel callback */
+    bool show_close = false;              /**< Add an X (and close on a backdrop tap) that runs neither callback */
 };
 
 /**

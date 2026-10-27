@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""Generate small line icons as LVGL A8 (alpha only) images.
+
+A8 images are drawn in the widget's image_recolor color, so one icon works
+on any background. Icons are drawn as round-capped strokes on a 24x24 grid,
+supersampled for smooth edges, at the pixel size each one is shown at.
+Standard library only.
+
+    python3 scripts/gen_icons.py            # writes src/ui/images/icon_*.c
+    python3 scripts/gen_icons.py --preview  # also writes icon_*.png (8x) for review
+"""
+
+import math
+import os
+import struct
+import sys
+import zlib
+
+GRID = 24
+SUPERSAMPLE = 4
+
+
+def arc(cx, cy, r, start_deg, end_deg, steps=12):
+    """Points along an arc; angles in degrees, y grows downward."""
+    return [(cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+            for a in (start_deg + (end_deg - start_deg) * i / steps for i in range(steps + 1))]
+
+
+def rounded_rect(x1, y1, x2, y2, r_top, r_bottom):
+    """Closed outline of a rectangle with separate top and bottom corner radii."""
+    pts = []
+    pts += arc(x1 + r_top, y1 + r_top, r_top, 180, 270)
+    pts += arc(x2 - r_top, y1 + r_top, r_top, 270, 360)
+    pts += arc(x2 - r_bottom, y2 - r_bottom, r_bottom, 0, 90)
+    pts += arc(x1 + r_bottom, y2 - r_bottom, r_bottom, 90, 180)
+    return pts + [pts[0]]
+
+
+# Each icon: output size in pixels, stroke width in grid units, and polylines
+# in grid units. Story item icons are 40px, like the inventory shows them.
+ICONS = {
+    "backpack": (24, 2.0, [
+        rounded_rect(4, 7, 20, 21, 4, 2),                                    # body
+        [(9.5, 7)] + arc(12, 4.5, 2.5, 180, 360) + [(14.5, 7)],              # handle
+        [(8, 11), (16, 11)],                                                 # flap
+        rounded_rect(8, 14.5, 16, 18.5, 1.5, 1.5),                           # pocket
+    ]),
+    "item_flashlight": (40, 1.4, [
+        rounded_rect(2.5, 10, 11.5, 15, 1.5, 1.5),                           # handle
+        [(11.5, 9.5), (16, 7), (16, 18), (11.5, 15.5), (11.5, 9.5)],         # head
+        [(6, 8.5), (8.5, 8.5)],                                              # switch
+        [(18.5, 8.5), (21.5, 6.5)],                                          # light
+        [(18.5, 12.5), (22, 12.5)],
+        [(18.5, 16.5), (21.5, 18.5)],
+    ]),
+    "item_honey": (40, 1.4, [
+        rounded_rect(4.5, 8, 19.5, 21.5, 3, 3),                              # jar
+        rounded_rect(6, 3.5, 18, 8, 1, 1),                                   # lid
+        [(4.5, 11.5), (8, 11.5), (8, 13.5)] + arc(9, 13.5, 1, 180, 0)        # honey dripping
+        + [(10, 13.5), (10, 11.5), (13.5, 11.5), (13.5, 15.5)] + arc(14.75, 15.5, 1.25, 180, 0)
+        + [(16, 15.5), (16, 11.5), (19.5, 11.5)],
+    ]),
+    "item_feather": (40, 1.4, [
+        [(3, 21.5), (18.5, 5.5)],                                            # quill
+        [(7.5, 17.5), (5.5, 13), (6.2, 11), (9.5, 11.5), (7, 9),           # vane, with a split
+         (12, 5), (17, 3.5), (20, 3.5), (20.5, 7), (19, 11.5), (17.5, 13.5),  # on each side
+         (14.5, 12.5), (16, 14.8), (11, 18), (7.5, 17.5)],
+    ]),
+    "item_shell": (40, 1.4, [
+        [(12, 19.5), (3, 11.5)] + arc(12, 11.5, 9, 180, 360) + [(21, 11.5), (12, 19.5)],  # shell
+        [(12, 19.5), (6.5, 5.5)],                                            # ribs
+        [(12, 19.5), (12, 3)],
+        [(12, 19.5), (17.5, 5.5)],
+        rounded_rect(9, 19.5, 15, 22, 1, 1),                                 # hinge
+    ]),
+}
+
+
+def dist_to_segment(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    length_sq = dx * dx + dy * dy
+    t = 0.0 if length_sq == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length_sq))
+    qx, qy = ax + t * dx, ay + t * dy
+    return math.hypot(px - qx, py - qy)
+
+
+def render(polylines, size, stroke):
+    """Alpha bytes (size*size) for strokes drawn on the 24-unit grid."""
+    segments = [(a, b) for line in polylines for a, b in zip(line, line[1:])]
+    scale = GRID / size
+    half = stroke / 2
+    alpha = bytearray(size * size)
+    for y in range(size):
+        for x in range(size):
+            covered = 0
+            for sy in range(SUPERSAMPLE):
+                for sx in range(SUPERSAMPLE):
+                    gx = (x + (sx + 0.5) / SUPERSAMPLE) * scale
+                    gy = (y + (sy + 0.5) / SUPERSAMPLE) * scale
+                    if any(dist_to_segment(gx, gy, *a, *b) <= half for a, b in segments):
+                        covered += 1
+            alpha[y * size + x] = round(255 * covered / SUPERSAMPLE ** 2)
+    return alpha
+
+
+def write_c(name, size, alpha, path):
+    rows = []
+    for y in range(size):
+        rows.append("  " + ", ".join(f"0x{v:02x}" for v in alpha[y * size:(y + 1) * size]) + ",")
+    var = f"icon_{name}"
+    with open(path, "w") as f:
+        f.write(f"""/**
+ * @file {var}.c
+ * @brief {size}x{size} "{name}" line icon, alpha only (generated by scripts/gen_icons.py)
+ *
+ * Drawn in the image's recolor color: set image_recolor and image_recolor_opa.
+ */
+
+#include "lvgl.h"
+
+static const uint8_t {var}_map[] = {{
+{chr(10).join(rows)}
+}};
+
+const lv_image_dsc_t {var} = {{
+  .header.cf = LV_COLOR_FORMAT_A8,
+  .header.magic = LV_IMAGE_HEADER_MAGIC,
+  .header.w = {size},
+  .header.h = {size},
+  .header.stride = {size},
+  .data_size = sizeof({var}_map),
+  .data = {var}_map,
+}};
+""")
+
+
+def write_preview_png(alpha, size, path, zoom=8):
+    """Icon as the app shows it, enlarged for review: items dark on white, the rest white on brown."""
+    if path.startswith("icon_item_"):
+        bg, fg = (0xFF, 0xFF, 0xFF), (0x3B, 0x2F, 0x25)
+    else:
+        bg, fg = (0x8B, 0x73, 0x55), (0xFF, 0xFF, 0xFF)
+    rows = []
+    for y in range(size * zoom):
+        row = bytearray(b"\x00")
+        for x in range(size * zoom):
+            a = alpha[(y // zoom) * size + x // zoom] / 255
+            row += bytes(round(b + (f - b) * a) for b, f in zip(bg, fg))
+        rows.append(bytes(row))
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    w = h = size * zoom
+    with open(path, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+                + chunk(b"IDAT", zlib.compress(b"".join(rows))) + chunk(b"IEND", b""))
+
+
+def main():
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out_dir = os.path.join(root, "src", "ui", "images")
+    for name, (size, stroke, polylines) in ICONS.items():
+        alpha = render(polylines, size, stroke)
+        write_c(name, size, alpha, os.path.join(out_dir, f"icon_{name}.c"))
+        print(f"wrote src/ui/images/icon_{name}.c")
+        if "--preview" in sys.argv:
+            write_preview_png(alpha, size, f"icon_{name}.png")
+            print(f"wrote icon_{name}.png")
+
+
+if __name__ == "__main__":
+    main()
