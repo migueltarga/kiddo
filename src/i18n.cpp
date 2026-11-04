@@ -96,7 +96,10 @@ static const LocalizedStrings strings_en = {
     "Looking for new stories...",
     "Downloading story...",
     "Stories to dream about",
-    "Volume"
+    "Volume",
+    "Auto brightness",
+    "Bedtime mode",
+    "Limits screen brightness, sound and lights."
 };
 
 static const LocalizedStrings strings_pt = {
@@ -182,7 +185,10 @@ static const LocalizedStrings strings_pt = {
     "Procurando novas histórias...",
     "Baixando história...",
     "Histórias para sonhar",
-    "Volume"
+    "Volume",
+    "Brilho automático",
+    "Modo de dormir",
+    "Reduz o brilho da tela, o som e as luzes."
 };
 
 const LocalizedStrings *S()

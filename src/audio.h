@@ -22,6 +22,8 @@ void init();
 /** @brief Set or read the sound-effect volume (0-100 percent). */
 void set_volume(uint8_t percent);
 uint8_t volume();
+/** @brief Limit effective volume while bedtime mode is active. */
+void set_bedtime_mode(bool enabled);
 
 
 /** @brief Sound effects, synthesized as they play */

@@ -273,6 +273,7 @@ static void on_inventory_choice_clicked(lv_event_t *e)
 		if (correct)
 			InventoryManager::getCurrentInventory().removeItem(selected_item.id);
 		show_node(correct ? success_next : failure_next);
+		led_effects::show(correct ? "blink:green" : "blink:red", "", "", false, false, false);
 	};
 	InventoryUI::showInventoryDialog(config);
 }

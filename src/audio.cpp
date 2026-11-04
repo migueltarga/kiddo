@@ -61,6 +61,7 @@ namespace
     /** @brief Sounds waiting to play */
     QueueHandle_t g_queue = nullptr;
     std::atomic<uint8_t> g_volume{DEFAULT_VOLUME};
+    std::atomic<bool> g_bedtime{false};
 
 #ifdef KIDDO_3248S035C
     void begin_audio_output()
@@ -117,7 +118,9 @@ namespace
             }
 
             float env = i < attack ? (float)i / attack : 1.0f - progress;
-            int v = 128 + (int)(val * env * t.volume * g_volume.load() / 100.0f);
+            uint8_t volume = g_volume.load();
+            if (g_bedtime.load() && volume > 20) volume = 20;
+            int v = 128 + (int)(val * env * t.volume * volume / 100.0f);
             dac_output_voltage(AUDIO_DAC_CHANNEL, (uint8_t)constrain(v, 0, 255));
 
             // Pace by the clock, so the time spent computing doesn't lower the pitch
@@ -171,6 +174,11 @@ namespace audio
     uint8_t volume()
     {
         return g_volume.load();
+    }
+
+    void set_bedtime_mode(bool enabled)
+    {
+        g_bedtime.store(enabled);
     }
 
     void init()

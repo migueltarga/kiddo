@@ -66,6 +66,8 @@ Stories are created using AI tools to generate engaging, age-appropriate content
 - Set up WiFi credentials on first boot
 - Choose your preferred language
 - Download initial story content
+- On the ESP32-3248S035C, turn on automatic brightness in Settings to use the front light sensor. It starts off, so the saved manual brightness stays in effect until enabled.
+- Bedtime mode in Settings limits screen brightness, sound volume, and RGB light intensity without changing the saved manual brightness or volume.
 
 ## Technical Stack
 

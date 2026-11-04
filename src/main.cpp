@@ -29,6 +29,7 @@
 #include "audio.h"
 #include "devtools.h"
 #include "led_effects.h"
+#include "display_comfort.h"
 
 #if __has_include(<WiFi.h>)
 #include <WiFi.h>
@@ -192,7 +193,9 @@ void setup()
     online_mode = prefs.getBool(PK_ONLINE_MODE, false);
     Serial.printf("[BOOT] Settings %s: language %u, online %d, brightness %u\n",
                   prefs_ok ? "loaded" : "UNAVAILABLE", (unsigned)current_language, online_mode, brightness);
-    backlight_write(brightness);
+    display_comfort::init(brightness,
+                          prefs.getBool(PK_AUTO_BRIGHTNESS, false),
+                          prefs.getBool(PK_BEDTIME, false));
 
     ui_router::show_splash(S()->loading);
     for (int i = 0; i < 10; i++) {
@@ -244,6 +247,7 @@ void loop()
     
     AsyncManager::process();
     led_effects::update();
+    display_comfort::update();
     devtools::poll();
     
     delay(5);

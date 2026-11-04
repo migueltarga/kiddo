@@ -250,9 +250,9 @@ With a speaker attached, pages play a sound when they open: a fanfare on endings
 
 ## Lights
 
-The ESP32-3248S035C has an RGB light. It changes with each page: endings cycle through colors, success and found items pulse green or yellow, wrong answers pulse red, night scenes pulse blue, and other scenes use a fitting steady color. The light turns off when leaving the story. Other boards ignore light cues.
+The ESP32-3248S035C has an RGB light. Each page gives a brief, low-brightness cue, then the light turns off. Endings cycle through colors, success and found items flash green or pulse yellow, wrong answers flash red, and other pages pulse a color that fits the scene. Other boards ignore light cues.
 
-Set `led` on a page to override the automatic effect. The effect lasts until the next page or until the story closes:
+Set `led` on a page to override the automatic effect. Every effect ends after at most 1.5 seconds:
 
 ```json
 "magic_door": {
@@ -263,7 +263,7 @@ Set `led` on a page to override the automatic effect. The effect lasts until the
 }
 ```
 
-Use `red`, `green`, `blue`, `yellow`, `purple`, `cyan`, or `white` for a steady light; prefix a color with `pulse:` or `blink:` for movement. `rainbow` cycles through colors, and `off` keeps the light dark on that page. Omit `led` to use the automatic story effect.
+Use `red`, `green`, `blue`, `yellow`, `purple`, `cyan`, or `white` for a brief glow; prefix a color with `pulse:` or `blink:` for movement. `rainbow` cycles through colors briefly, and `off` keeps the light dark on that page. Omit `led` to use the automatic story effect.
 
 ## A complete example
 

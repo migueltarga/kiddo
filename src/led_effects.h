@@ -9,4 +9,5 @@ void show(const String& cue, const String& scene, const String& sound,
           bool night, bool ending, bool found_item);
 void off();
 void update();
+void set_bedtime_mode(bool enabled);
 }
