@@ -101,6 +101,8 @@
 #define PNS "cyd"
 /** @brief Brightness preference key */
 #define PK_BRIGHTNESS "brightness"
+#define PK_AUTO_BRIGHTNESS "autobright"
+#define PK_BEDTIME "bedtime"
 /** @brief Audio volume preference key */
 #define PK_VOLUME "volume"
 /** @brief First-boot volume for this board */

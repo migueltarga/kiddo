@@ -126,6 +126,9 @@ struct LocalizedStrings
   const char *downloading_story;        /**< Overlay while a story downloads */
   const char *home_tagline;             /**< Line under the logo on the home screen */
   const char *volume;                   /**< Audio volume label */
+  const char *auto_brightness;          /**< Automatic display brightness */
+  const char *bedtime_mode;             /**< Bedtime preset label */
+  const char *bedtime_hint;             /**< Bedtime preset explanation */
 };
 
 /**

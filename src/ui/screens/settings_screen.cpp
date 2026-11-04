@@ -19,6 +19,7 @@
 #include "ui/components/ui_components.h"
 #include "ui/fonts.h"
 #include "audio.h"
+#include "display_comfort.h"
 #include "ui/router.h"
 #include "ui/app_ui.h"
 #include <WiFi.h>
@@ -231,12 +232,19 @@ void ui_settings_screen_show()
     lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_AUTO);
     apply_scrollbar_style(panel);
     
-    static int32_t cols[] = {88, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static int32_t cols[] = {
+#ifdef KIDDO_3248S035C
+        112,
+#else
+        88,
+#endif
+        LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST
+    };
     static int32_t rows[] = {
         LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
         LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
 #ifdef KIDDO_3248S035C
-        LV_GRID_CONTENT,
+        LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
 #endif
         LV_GRID_TEMPLATE_LAST
     };
@@ -262,7 +270,7 @@ void ui_settings_screen_show()
     lv_obj_add_event_cb(sl, [](lv_event_t *e) { 
         auto *o = (lv_obj_t*)lv_event_get_target(e);
         brightness = (uint8_t)lv_slider_get_value(o);
-        backlight_write(brightness);
+        display_comfort::set_manual_brightness(brightness);
     }, LV_EVENT_VALUE_CHANGED, nullptr);
     // Persist once per drag rather than on every step, to spare the flash
     lv_obj_add_event_cb(sl, [](lv_event_t *e) {
@@ -272,6 +280,27 @@ void ui_settings_screen_show()
     r++;
 
 #ifdef KIDDO_3248S035C
+    if (display_comfort::automatic()) lv_obj_add_state(sl, LV_STATE_DISABLED);
+    lv_obj_t *auto_label = lv_label_create(panel);
+    lv_label_set_text(auto_label, s->auto_brightness);
+    lv_obj_set_style_text_font(auto_label, font14(), 0);
+    lv_obj_set_grid_cell(auto_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_CENTER, r, 1);
+
+    lv_obj_t *auto_switch = lv_switch_create(panel);
+    lv_obj_set_style_bg_color(auto_switch, palette::parchment(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(auto_switch, palette::primary(), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    if (display_comfort::automatic()) lv_obj_add_state(auto_switch, LV_STATE_CHECKED);
+    lv_obj_add_event_cb(auto_switch, [](lv_event_t *e) {
+        bool enabled = lv_obj_has_state((lv_obj_t*)lv_event_get_target(e), LV_STATE_CHECKED);
+        display_comfort::set_automatic(enabled);
+        prefs.putBool(PK_AUTO_BRIGHTNESS, enabled);
+        lv_obj_t *slider = (lv_obj_t*)lv_event_get_user_data(e);
+        if (enabled) lv_obj_add_state(slider, LV_STATE_DISABLED);
+        else lv_obj_remove_state(slider, LV_STATE_DISABLED);
+    }, LV_EVENT_VALUE_CHANGED, sl);
+    lv_obj_set_grid_cell(auto_switch, LV_GRID_ALIGN_END, 1, 1, LV_GRID_ALIGN_CENTER, r, 1);
+    r++;
+
     lv_obj_t *volume_label = lv_label_create(panel);
     lv_label_set_text_fmt(volume_label, "%s %u%%", s->volume, audio::volume());
     lv_obj_set_style_text_font(volume_label, font14(), 0);
@@ -296,6 +325,31 @@ void ui_settings_screen_show()
         prefs.putUChar(PK_VOLUME, audio::volume());
     }, LV_EVENT_RELEASED, nullptr);
     lv_obj_set_grid_cell(volume_slider, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_CENTER, r, 1);
+    r++;
+
+    lv_obj_t *bedtime_label = lv_label_create(panel);
+    lv_label_set_text(bedtime_label, s->bedtime_mode);
+    lv_obj_set_style_text_font(bedtime_label, font14(), 0);
+    lv_obj_set_grid_cell(bedtime_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_CENTER, r, 1);
+
+    lv_obj_t *bedtime_switch = lv_switch_create(panel);
+    lv_obj_set_style_bg_color(bedtime_switch, palette::parchment(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(bedtime_switch, palette::primary(), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    if (display_comfort::bedtime()) lv_obj_add_state(bedtime_switch, LV_STATE_CHECKED);
+    lv_obj_add_event_cb(bedtime_switch, [](lv_event_t *e) {
+        bool enabled = lv_obj_has_state((lv_obj_t*)lv_event_get_target(e), LV_STATE_CHECKED);
+        display_comfort::set_bedtime(enabled);
+        prefs.putBool(PK_BEDTIME, enabled);
+    }, LV_EVENT_VALUE_CHANGED, nullptr);
+    lv_obj_set_grid_cell(bedtime_switch, LV_GRID_ALIGN_END, 1, 1, LV_GRID_ALIGN_CENTER, r, 1);
+    r++;
+
+    lv_obj_t *bedtime_hint = lv_label_create(panel);
+    lv_label_set_text(bedtime_hint, s->bedtime_hint);
+    lv_label_set_long_mode(bedtime_hint, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(bedtime_hint, font12(), 0);
+    lv_obj_set_style_text_color(bedtime_hint, palette::ink(), 0);
+    lv_obj_set_grid_cell(bedtime_hint, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_CENTER, r, 1);
     r++;
 #endif
 

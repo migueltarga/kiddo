@@ -7,6 +7,7 @@ constexpr uint8_t kPins[3] = {4, 16, 17};
 constexpr uint8_t kChannels[3] = {4, 5, 6};
 enum Mode : uint8_t { OFF, STEADY, PULSE, BLINK, RAINBOW };
 Mode mode = OFF;
+bool bedtime_mode = false;
 uint8_t color[3] = {0, 0, 0};
 uint32_t started = 0;
 uint32_t last_update = 0;
@@ -35,6 +36,16 @@ void write_rgb(uint8_t r, uint8_t g, uint8_t b) {
 #endif
 
 namespace led_effects {
+void set_bedtime_mode(bool enabled) {
+#ifdef KIDDO_3248S035C
+    bedtime_mode = enabled;
+    last_update = 0;
+    update();
+#else
+    (void)enabled;
+#endif
+}
+
 void init() {
 #ifdef KIDDO_3248S035C
     for (int i = 0; i < 3; ++i) {
@@ -97,6 +108,11 @@ void update() {
     uint32_t now = millis();
     if (now - last_update < 25) return;
     last_update = now;
+    if (bedtime_mode) {
+        if (mode == RAINBOW) write_rgb(12, 5, 0);
+        else write_rgb(color[0] / 6, color[1] / 6, color[2] / 6);
+        return;
+    }
     if (mode == RAINBOW) {
         static const uint8_t wheel[6][3] = {
             {90, 0, 0}, {90, 55, 0}, {0, 80, 0},
