@@ -22,6 +22,7 @@ This project uses affordable, easily accessible hardware:
 
 ### Core Components
 - **ESP32-2432S028R** - ILI9341 device with 2.8" touchscreen (under $20)
+- **ESP32-3248S035C** - ST7796 device with 3.5" capacitive touchscreen
 - **Mini Speaker** - 8ohm 1W (optional, for audio feedback)
 
 ### 3D Printed Case
@@ -51,13 +52,16 @@ Stories are created using AI tools to generate engaging, age-appropriate content
 
 ### Prerequisites
 - PlatformIO IDE or PlatformIO Core
-- ESP32-2432S028R board
+- ESP32-2432S028R or ESP32-3248S035C board
 - USB cable for programming
 
 ### Installation
 1. Clone this repository
 2. Open the project in PlatformIO
-3. Build and upload to your ESP32 device
+3. Build and upload the matching PlatformIO environment to your ESP32 device:
+   - 2.8-inch resistive board: `pio run -e esp32dev -t upload`
+   - 3.5-inch capacitive board: `pio run -e esp32-3248s035c -t upload`
+   Add `--upload-port /dev/cu.usbserial-...` if PlatformIO cannot select the port.
 4. Configure WiFi settings through the device interface
 
 ### Configuration

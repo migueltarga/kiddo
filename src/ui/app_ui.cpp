@@ -7,6 +7,7 @@
 #include "ui/fonts.h"
 #include "remote_catalog.h"
 #include "audio.h"
+#include "led_effects.h"
 #include "ui/images/images.h"
 #include "screens/ui_screens.h"
 
@@ -42,12 +43,16 @@ static void ensure_home_background(lv_obj_t *parent){
 	}, LV_EVENT_DELETE, nullptr);
 	// Night scene with the logo, drawn by scripts/gen_home.py
 	lv_image_set_src(home_bg_img, &image_home);
-	lv_obj_set_size(home_bg_img, SCREEN_WIDTH, SCREEN_HEIGHT);
+	// Fill taller screens as well as the original 240x320 display.
+	uint32_t scale_x = (uint32_t)SCREEN_WIDTH * 256 / image_home.header.w;
+	uint32_t scale_y = (uint32_t)SCREEN_HEIGHT * 256 / image_home.header.h;
+	lv_image_set_scale(home_bg_img, scale_x > scale_y ? scale_x : scale_y);
 	lv_obj_align(home_bg_img, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_move_background(home_bg_img);
 }
 
 void ui_app_show_home(){
+	led_effects::off();
 	lv_obj_t *scr = lv_scr_act();
 	if(!home_bg_img){
 		lv_obj_clean(scr);
@@ -58,7 +63,8 @@ void ui_app_show_home(){
 		home_lbl_tagline = lv_label_create(scr);
 		lv_obj_set_style_text_font(home_lbl_tagline, font14(), 0);
 		lv_obj_set_style_text_color(home_lbl_tagline, lv_color_hex(0xF3DDB8), 0);
-		lv_obj_align(home_lbl_tagline, LV_ALIGN_TOP_MID, 0, 152);
+		lv_obj_align(home_lbl_tagline, LV_ALIGN_TOP_MID, 0,
+		             152 * SCREEN_HEIGHT / 320);
 
 		// One clear main action; Settings is for grown-ups, so it stays small
 		lv_obj_t *btn_stories = lv_btn_create(scr);

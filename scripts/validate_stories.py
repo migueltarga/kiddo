@@ -29,6 +29,10 @@ FIGURES = {'zoe', 'ted', 'girl', 'girl2', 'boy', 'mom', 'dad', 'grandpa', 'grand
            'dog', 'cat', 'frog', 'owl', 'bear', 'squirrel', 'sheep'}
 PROPS = {'float', 'ball', 'sandcastle', 'book', 'blocks', 'pancakes', 'cake', 'food', 'paints', 'chest', 'door'}
 SOUNDS = {'click', 'boing', 'chime', 'success', 'oops', 'page', 'fanfare'}
+LED_COLORS = {'red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'white'}
+LED_EFFECTS = {'off', 'rainbow'} | LED_COLORS | {
+    f'{pattern}:{color}' for pattern in ('pulse', 'blink') for color in LED_COLORS
+}
 
 
 def check_file_name(name):
@@ -83,6 +87,8 @@ def check_story(story):
             check_names(key, 'props', node['props'], PROPS)
         if node.get('sound') and node['sound'] not in SOUNDS:
             issues.append(f'{key}: unknown sound "{node["sound"]}" (one of {", ".join(sorted(SOUNDS))})')
+        if 'led' in node and node['led'] not in LED_EFFECTS:
+            issues.append(f'{key}: unknown led effect "{node["led"]}"')
         for choice in node.get('choices', []):
             if choice.get('next') not in nodes:
                 issues.append(f'{key}: choice leads to missing node "{choice.get("next")}"')

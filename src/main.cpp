@@ -12,6 +12,9 @@
 #include <lvgl.h>
 #include <TFT_eSPI.h>
 #include <XPT2046_Touchscreen.h>
+#ifdef KIDDO_3248S035C
+#include <Wire.h>
+#endif
 #include <Preferences.h>
 #include "config.h"
 #include "i18n.h"
@@ -25,6 +28,7 @@
 #include "ui/router.h"
 #include "audio.h"
 #include "devtools.h"
+#include "led_effects.h"
 
 #if __has_include(<WiFi.h>)
 #include <WiFi.h>
@@ -32,8 +36,46 @@
 
 /** @brief Touchscreen SPI instance */
 SPIClass touchscreenSPI = SPIClass(VSPI);
+#ifndef KIDDO_3248S035C
 /** @brief Touchscreen driver instance */
 XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+#else
+static uint8_t gt911_address = 0;
+static bool gt911_read(uint16_t reg, uint8_t *bytes, size_t count) {
+    Wire.beginTransmission(gt911_address);
+    Wire.write(reg >> 8);
+    Wire.write(reg & 0xff);
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom(gt911_address, count) != count) return false;
+    for (size_t i = 0; i < count; ++i) bytes[i] = Wire.read();
+    return true;
+}
+static void gt911_clear() {
+    Wire.beginTransmission(gt911_address);
+    Wire.write(0x81);
+    Wire.write(0x4e);
+    Wire.write(0);
+    Wire.endTransmission();
+}
+static void gt911_init() {
+    // GPIO21 (INT) is tied low on some C revisions, so poll the controller.
+    pinMode(25, OUTPUT);
+    digitalWrite(25, LOW);
+    delay(10);
+    digitalWrite(25, HIGH);
+    delay(60);
+    Wire.begin(33, 32);
+    for (uint8_t address : {uint8_t(0x5d), uint8_t(0x14)}) {
+        Wire.beginTransmission(address);
+        if (Wire.endTransmission() == 0) {
+            gt911_address = address;
+            Serial.printf("[TOUCH] GT911 at 0x%02x\n", address);
+            return;
+        }
+    }
+    Serial.println("[TOUCH] GT911 not found");
+}
+#endif
 /** @brief LVGL display buffer */
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 /** @brief TFT display driver */
@@ -58,6 +100,21 @@ static void touchscreen_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
     if (devtools::read_touch(data))
         return;
+#ifdef KIDDO_3248S035C
+    data->state = LV_INDEV_STATE_RELEASED;
+    if (!gt911_address) return;
+    uint8_t status = 0;
+    if (!gt911_read(0x814e, &status, 1) || !(status & 0x80)) return;
+    if ((status & 0x0f) > 0) {
+        uint8_t point[7];
+        if (gt911_read(0x814f, point, sizeof(point))) {
+            data->point.x = constrain((int)(point[1] | (point[2] << 8)), 0, SCREEN_WIDTH - 1);
+            data->point.y = constrain((int)(point[3] | (point[4] << 8)), 0, SCREEN_HEIGHT - 1);
+            data->state = LV_INDEV_STATE_PRESSED;
+        }
+    }
+    gt911_clear();
+#else
     if (touchscreen.tirqTouched() && touchscreen.touched())
     {
         TS_Point p = touchscreen.getPoint();
@@ -92,6 +149,7 @@ static void touchscreen_read(lv_indev_t *indev, lv_indev_data_t *data)
     {
         data->state = LV_INDEV_STATE_RELEASED;
     }
+#endif
 }
 
 void setup()
@@ -108,10 +166,14 @@ void setup()
     
     FileSystem::init();
     
+#ifdef KIDDO_3248S035C
+    gt911_init();
+#else
     touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     touchscreen.begin(touchscreenSPI);
     touchscreen.setRotation(TOUCH_ROTATION);
     pinMode(XPT2046_IRQ, INPUT_PULLUP);
+#endif
     lv_display_t *disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, sizeof(draw_buf));
     lv_display_set_default(disp);
     devtools::init(disp);
@@ -121,8 +183,10 @@ void setup()
     lv_indev_set_read_cb(indev, touchscreen_read);
 
     audio::init();
+    led_effects::init();
     bool prefs_ok = prefs.begin(PNS, false);
     brightness = prefs.getUChar(PK_BRIGHTNESS, 200);
+    audio::set_volume(prefs.getUChar(PK_VOLUME, DEFAULT_VOLUME));
     current_language = (Language)prefs.getUInt(PK_LANG, LANG_EN);
     story_font_scale = prefs.getUChar(PK_STORY_FONT, 1);
     online_mode = prefs.getBool(PK_ONLINE_MODE, false);
@@ -179,6 +243,7 @@ void loop()
     lv_timer_handler();
     
     AsyncManager::process();
+    led_effects::update();
     devtools::poll();
     
     delay(5);

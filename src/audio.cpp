@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <lvgl.h>
 #include <vector>
+#include <atomic>
 #include "config.h"
 
 #if AUDIO_DAC_PIN == 25
@@ -59,6 +60,32 @@ namespace
 
     /** @brief Sounds waiting to play */
     QueueHandle_t g_queue = nullptr;
+    std::atomic<uint8_t> g_volume{DEFAULT_VOLUME};
+
+#ifdef KIDDO_3248S035C
+    void begin_audio_output()
+    {
+        dac_output_enable(AUDIO_DAC_CHANNEL);
+        // Bring the DAC to its midpoint gently after its quiet idle state.
+        for (int v = 0; v <= 128; v += 8) {
+            dac_output_voltage(AUDIO_DAC_CHANNEL, v);
+            delayMicroseconds(150);
+        }
+    }
+
+    void end_audio_output()
+    {
+        // The amplifier stays powered. Hold its input low between sounds so
+        // the DAC does not feed its idle noise into the speaker.
+        for (int v = 128; v >= 0; v -= 8) {
+            dac_output_voltage(AUDIO_DAC_CHANNEL, v);
+            delayMicroseconds(150);
+        }
+        dac_output_disable(AUDIO_DAC_CHANNEL);
+        pinMode(AUDIO_DAC_PIN, OUTPUT);
+        digitalWrite(AUDIO_DAC_PIN, LOW);
+    }
+#endif
 
     /**
      * @brief Play one note, sample by sample
@@ -90,7 +117,7 @@ namespace
             }
 
             float env = i < attack ? (float)i / attack : 1.0f - progress;
-            int v = 128 + (int)(val * env * t.volume);
+            int v = 128 + (int)(val * env * t.volume * g_volume.load() / 100.0f);
             dac_output_voltage(AUDIO_DAC_CHANNEL, (uint8_t)constrain(v, 0, 255));
 
             // Pace by the clock, so the time spent computing doesn't lower the pitch
@@ -114,6 +141,9 @@ namespace
         {
             if (xQueueReceive(g_queue, &id, portMAX_DELAY) != pdTRUE || id >= sizeof(kEffects) / sizeof(kEffects[0]))
                 continue;
+#ifdef KIDDO_3248S035C
+            begin_audio_output();
+#endif
             const Effect &effect = kEffects[id];
             uint32_t next_us = micros();
             for (uint8_t i = 0; i < effect.count; i++)
@@ -124,16 +154,34 @@ namespace
                     next_us += 12000;
             }
             dac_output_voltage(AUDIO_DAC_CHANNEL, 128);
+#ifdef KIDDO_3248S035C
+            end_audio_output();
+#endif
         }
     }
 }
 
 namespace audio
 {
+    void set_volume(uint8_t percent)
+    {
+        g_volume.store(percent > 100 ? 100 : percent);
+    }
+
+    uint8_t volume()
+    {
+        return g_volume.load();
+    }
+
     void init()
     {
+#ifdef KIDDO_3248S035C
+        pinMode(AUDIO_DAC_PIN, OUTPUT);
+        digitalWrite(AUDIO_DAC_PIN, LOW);
+#else
         dac_output_enable(AUDIO_DAC_CHANNEL);
         dac_output_voltage(AUDIO_DAC_CHANNEL, 128);
+#endif
         g_queue = xQueueCreate(3, sizeof(uint8_t));
         xTaskCreatePinnedToCore(audio_task, "audio", 2048, nullptr, 1, nullptr,
                                 xPortGetCoreID() == 0 ? 1 : 0);
@@ -143,6 +191,10 @@ namespace audio
     {
         if (!g_queue)
             return;
+#ifdef KIDDO_3248S035C
+        if (g_volume.load() == 0)
+            return;
+#endif
         uint8_t id = (uint8_t)sound;
         xQueueSend(g_queue, &id, 0);
     }

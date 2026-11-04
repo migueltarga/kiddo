@@ -95,7 +95,8 @@ static const LocalizedStrings strings_en = {
     // Loading strings
     "Looking for new stories...",
     "Downloading story...",
-    "Stories to dream about"
+    "Stories to dream about",
+    "Volume"
 };
 
 static const LocalizedStrings strings_pt = {
@@ -180,7 +181,8 @@ static const LocalizedStrings strings_pt = {
     // Loading strings
     "Procurando novas histórias...",
     "Baixando história...",
-    "Histórias para sonhar"
+    "Histórias para sonhar",
+    "Volume"
 };
 
 const LocalizedStrings *S()

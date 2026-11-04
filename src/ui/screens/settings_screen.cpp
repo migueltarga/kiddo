@@ -234,7 +234,11 @@ void ui_settings_screen_show()
     static int32_t cols[] = {88, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static int32_t rows[] = {
         LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
-        LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST
+        LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
+#ifdef KIDDO_3248S035C
+        LV_GRID_CONTENT,
+#endif
+        LV_GRID_TEMPLATE_LAST
     };
     lv_obj_set_grid_dsc_array(panel, cols, rows);
     lv_obj_set_style_pad_row(panel, 8, 0);
@@ -266,6 +270,34 @@ void ui_settings_screen_show()
     }, LV_EVENT_RELEASED, nullptr);
     lv_obj_set_grid_cell(sl, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_CENTER, r, 1);
     r++;
+
+#ifdef KIDDO_3248S035C
+    lv_obj_t *volume_label = lv_label_create(panel);
+    lv_label_set_text_fmt(volume_label, "%s %u%%", s->volume, audio::volume());
+    lv_obj_set_style_text_font(volume_label, font14(), 0);
+    lv_obj_set_style_min_height(volume_label, 22, 0);
+    lv_obj_set_grid_cell(volume_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_CENTER, r, 1);
+
+    lv_obj_t *volume_slider = lv_slider_create(panel);
+    lv_slider_set_range(volume_slider, 0, 100);
+    lv_slider_set_value(volume_slider, audio::volume(), LV_ANIM_OFF);
+    lv_obj_set_style_height(volume_slider, 10, 0);
+    lv_obj_set_style_pad_all(volume_slider, 1, 0);
+    lv_obj_set_style_bg_color(volume_slider, palette::parchment(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(volume_slider, palette::primary(), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(volume_slider, palette::primary_dark(), LV_PART_KNOB);
+    lv_obj_add_event_cb(volume_slider, [](lv_event_t *e) {
+        uint8_t value = lv_slider_get_value((lv_obj_t*)lv_event_get_target(e));
+        audio::set_volume(value);
+        lv_obj_t *label = (lv_obj_t*)lv_event_get_user_data(e);
+        lv_label_set_text_fmt(label, "%s %u%%", S()->volume, value);
+    }, LV_EVENT_VALUE_CHANGED, volume_label);
+    lv_obj_add_event_cb(volume_slider, [](lv_event_t *) {
+        prefs.putUChar(PK_VOLUME, audio::volume());
+    }, LV_EVENT_RELEASED, nullptr);
+    lv_obj_set_grid_cell(volume_slider, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_CENTER, r, 1);
+    r++;
+#endif
 
     lv_obj_t *lbl_font = lv_label_create(panel);
     lv_label_set_text(lbl_font, s->story_font_label);
