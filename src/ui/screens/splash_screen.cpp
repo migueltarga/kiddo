@@ -12,6 +12,7 @@
 #include "ui_screens.h"
 #include "ui/images/images.h"
 #include "config.h"
+#include "led_effects.h"
 #include "ui/components/ui_components.h"
 
 /**
@@ -20,6 +21,7 @@
  */
 void ui_splash_screen_show(const char *msg)
 {
+    led_effects::off();
     lv_obj_t *scr = lv_obj_create(NULL);
     lv_scr_load(scr);
 

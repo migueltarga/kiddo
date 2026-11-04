@@ -108,6 +108,7 @@ static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
             nn.cast_set = parseNames(n["cast"], nn.cast);
             nn.props_set = parseNames(n["props"], nn.props);
             nn.sound = n["sound"].is<const char *>() ? n["sound"].as<const char *>() : "";
+            nn.led = n["led"].is<const char *>() ? n["led"].as<const char *>() : "";
             
             // Parse inventory choice fields
             nn.inventory_choice = n["inventory_choice"].is<bool>() ? (bool)n["inventory_choice"] : false;

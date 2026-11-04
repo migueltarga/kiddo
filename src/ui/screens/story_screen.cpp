@@ -10,6 +10,7 @@
 #include <lvgl.h>
 
 #include "audio.h"
+#include "led_effects.h"
 #include "config.h"
 #include "i18n.h"
 #include "story_engine.h"
@@ -326,11 +327,11 @@ static void show_node(const String &key)
 		g_inventory_btn = InventoryUI::createInventoryButton(header);
 		
 		lv_obj_remove_flag(g_inventory_btn, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-		lv_obj_set_pos(g_inventory_btn, 240 - 32 - 6, (38 - 30) / 2); // x = header_width - button_width - padding, y = centered
+		lv_obj_set_pos(g_inventory_btn, SCREEN_WIDTH - 32 - 6, (38 - 30) / 2);
 		
 		lv_obj_t *title_label = (lv_obj_t *)lv_obj_get_user_data(header);
 		if (title_label) {
-			lv_obj_set_width(title_label, 150); // Increased from 130 to 160 for better layout
+			lv_obj_set_width(title_label, SCREEN_WIDTH - 90);
 		}
 	}
 	
@@ -351,7 +352,7 @@ static void show_node(const String &key)
 	lv_coord_t content_h = SCREEN_HEIGHT - header_h;
 	lv_obj_t *content = lv_obj_create(scr);
 	lv_obj_remove_style_all(content);
-	lv_obj_set_size(content, 240, content_h);
+	lv_obj_set_size(content, SCREEN_WIDTH, content_h);
 	lv_obj_align(content, LV_ALIGN_TOP_MID, 0, header_h);
 	apply_screen_bg(content);
 	lv_obj_set_style_pad_hor(content, 10, 0);
@@ -359,7 +360,7 @@ static void show_node(const String &key)
 	lv_obj_set_style_pad_bottom(content, 10, 0);
 	lv_obj_set_style_pad_row(content, 10, 0);
 	lv_obj_set_flex_flow(content, LV_FLEX_FLOW_COLUMN);
-	lv_obj_set_flex_align(content, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START,
+	lv_obj_set_flex_align(content, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER,
 						  LV_FLEX_ALIGN_START);
 	lv_obj_add_flag(content, LV_OBJ_FLAG_SCROLLABLE);
 	lv_obj_set_scroll_dir(content, LV_DIR_VER);
@@ -384,8 +385,10 @@ static void show_node(const String &key)
 	bool has_images = images_left > 0;
 	
 	// Pages without a picture get an animated scene to look at while someone reads
+	g_last_scene = StoryScene::pick(g_story, *n, g_scene_leads, g_last_scene);
+	led_effects::show(n->led, g_last_scene.place, n->sound,
+	                  g_last_scene.night, at_end, n->gives_item.length() > 0);
 	if (!has_images) {
-		g_last_scene = StoryScene::pick(g_story, *n, g_scene_leads, g_last_scene);
 		lv_obj_t *scene = StoryScene::create(content, g_last_scene);
 		lv_obj_move_to_index(scene, 0);
 	}
@@ -418,6 +421,7 @@ static void show_node(const String &key)
 			lv_obj_t *img = lv_img_create(img_wrapper);
 			lv_obj_set_width(img, 220);
 			lv_obj_set_height(img, 130);
+			lv_image_set_inner_align(img, LV_IMAGE_ALIGN_CENTER);
 			lv_obj_set_style_pad_all(img, 0, 0);
 
 			ImageDisplay::createLoadingPlaceholder(img);

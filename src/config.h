@@ -34,7 +34,11 @@
 /** @brief Touchscreen chip select pin */
 #define XPT2046_CS 33
 /** @brief LCD backlight control pin */
+#ifdef KIDDO_3248S035C
+#define LCD_BACKLIGHT_PIN 27
+#else
 #define LCD_BACKLIGHT_PIN 21
+#endif
 
 // ---------------- Audio (DAC) ----------------
 // GPIO25 and GPIO26 are the two ESP32 DAC pins. GPIO25 is currently used as XPT2046 CLK.
@@ -46,9 +50,17 @@
 
 // ---------------- Display sizes ----------------
 /** @brief Screen width in pixels */
+#ifdef KIDDO_3248S035C
+#define SCREEN_WIDTH 320
+#else
 #define SCREEN_WIDTH 240
+#endif
 /** @brief Screen height in pixels */
+#ifdef KIDDO_3248S035C
+#define SCREEN_HEIGHT 480
+#else
 #define SCREEN_HEIGHT 320
+#endif
 
 // LVGL draw buffer size: 1/10th screen, RGB565
 /** @brief LVGL color depth */
@@ -89,6 +101,14 @@
 #define PNS "cyd"
 /** @brief Brightness preference key */
 #define PK_BRIGHTNESS "brightness"
+/** @brief Audio volume preference key */
+#define PK_VOLUME "volume"
+/** @brief First-boot volume for this board */
+#ifdef KIDDO_3248S035C
+#define DEFAULT_VOLUME 50
+#else
+#define DEFAULT_VOLUME 100
+#endif
 /** @brief Language preference key */
 #define PK_LANG "language"
 /** @brief Story font preference key */

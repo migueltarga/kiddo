@@ -1,6 +1,6 @@
 # Kiddo Story Format
 
-A Kiddo story is one JSON file: pages ("nodes") with text and choices that lead to other pages. A catalog (`index.json`) lists the stories the device can download. This document describes both, plus the optional extras: items and the backpack, scenes, figures and sounds.
+A Kiddo story is one JSON file: pages ("nodes") with text and choices that lead to other pages. A catalog (`index.json`) lists the stories the device can download. This document describes both, plus the optional extras: items and the backpack, scenes, figures, sounds, and lights.
 
 Check your files before publishing:
 
@@ -76,6 +76,7 @@ Once a story is downloaded, the device keeps its copy. If you change the story l
 | `gives_item` | Item id added to the backpack when the page opens. |
 | `scene`, `cast`, `props` | Override the animated scene, see [Scenes](#scenes). |
 | `sound` | Sound played when the page opens, see [Sounds](#sounds). |
+| `led` | Optional RGB light effect on the 3.5-inch ESP32-3248S035C, see [Lights](#lights). |
 | `inventory_choice`, `correct_item`, `success_next`, `failure_next` | A backpack puzzle, see below. |
 
 A choice:
@@ -246,6 +247,23 @@ With a speaker attached, pages play a sound when they open: a fanfare on endings
 | `fanfare` | A big moment. |
 | `boing` | Something funny. |
 | `page`, `click` | Quiet ticks. |
+
+## Lights
+
+The ESP32-3248S035C has an RGB light. It changes with each page: endings cycle through colors, success and found items pulse green or yellow, wrong answers pulse red, night scenes pulse blue, and other scenes use a fitting steady color. The light turns off when leaving the story. Other boards ignore light cues.
+
+Set `led` on a page to override the automatic effect. The effect lasts until the next page or until the story closes:
+
+```json
+"magic_door": {
+  "text": "The door began to glow.",
+  "sound": "chime",
+  "led": "pulse:purple",
+  "choices": [{ "text": "Open it", "next": "inside" }]
+}
+```
+
+Use `red`, `green`, `blue`, `yellow`, `purple`, `cyan`, or `white` for a steady light; prefix a color with `pulse:` or `blink:` for movement. `rainbow` cycles through colors, and `off` keeps the light dark on that page. Omit `led` to use the automatic story effect.
 
 ## A complete example
 

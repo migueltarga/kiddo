@@ -125,6 +125,7 @@ struct LocalizedStrings
   const char *checking_stories;         /**< Library row while the catalog loads */
   const char *downloading_story;        /**< Overlay while a story downloads */
   const char *home_tagline;             /**< Line under the logo on the home screen */
+  const char *volume;                   /**< Audio volume label */
 };
 
 /**

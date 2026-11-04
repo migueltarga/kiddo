@@ -10,6 +10,7 @@
 #include "styles.h"
 #include "ui/fonts.h"
 #include "audio.h"
+#include "config.h"
 
 /**
  * @brief Create a header component
@@ -21,7 +22,7 @@ lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
 {
     // Create header container
     lv_obj_t *header = lv_obj_create(parent);
-    lv_obj_set_size(header, 240, 38);
+    lv_obj_set_size(header, LV_PCT(100), 38);
     lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 0);
     lv_obj_set_style_bg_color(header, palette::parchment(), 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
@@ -73,7 +74,7 @@ lv_obj_t *ui_header_create(lv_obj_t *parent, const ui_header_config_t *config)
         
         // Enable marquee for long titles (only if not centered)
         if (config->enable_marquee && !config->center_title) {
-            lv_obj_set_width(title_label, 180);  // Fixed width for marquee
+            lv_obj_set_width(title_label, SCREEN_WIDTH - 60);
             lv_label_set_long_mode(title_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         }
         

@@ -19,6 +19,10 @@ namespace audio {
  */
 void init();
 
+/** @brief Set or read the sound-effect volume (0-100 percent). */
+void set_volume(uint8_t percent);
+uint8_t volume();
+
 
 /** @brief Sound effects, synthesized as they play */
 enum class Sound : uint8_t {
