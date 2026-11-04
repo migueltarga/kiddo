@@ -14,9 +14,9 @@ uint32_t last_update = 0;
 
 bool named_color(const String& name, uint8_t out[3]) {
     static const struct { const char* name; uint8_t r, g, b; } colors[] = {
-        {"red", 90, 0, 0}, {"green", 0, 80, 0}, {"blue", 0, 20, 100},
-        {"yellow", 90, 55, 0}, {"purple", 70, 0, 90},
-        {"cyan", 0, 75, 80}, {"white", 65, 65, 65},
+        {"red", 16, 0, 0}, {"green", 0, 14, 0}, {"blue", 0, 3, 16},
+        {"yellow", 16, 9, 0}, {"purple", 12, 0, 16},
+        {"cyan", 0, 12, 13}, {"white", 9, 9, 9},
     };
     for (const auto& c : colors) {
         if (name == c.name) {
@@ -71,14 +71,14 @@ void show(const String& cue, const String& scene, const String& sound,
     String effect = cue;
     if (effect.isEmpty()) {
         if (ending || sound == "fanfare") effect = "rainbow";
-        else if (sound == "oops") effect = "pulse:red";
-        else if (sound == "success") effect = "pulse:green";
+        else if (sound == "oops") effect = "blink:red";
+        else if (sound == "success") effect = "blink:green";
         else if (found_item || sound == "chime") effect = "pulse:yellow";
         else if (night) effect = "pulse:blue";
-        else if (scene == "forest" || scene == "garden" || scene == "playground") effect = "green";
-        else if (scene == "pool" || scene == "lake" || scene == "beach") effect = "cyan";
-        else if (scene == "cave" || scene == "sky") effect = "purple";
-        else effect = "yellow";
+        else if (scene == "forest" || scene == "garden" || scene == "playground") effect = "pulse:green";
+        else if (scene == "pool" || scene == "lake" || scene == "beach") effect = "pulse:cyan";
+        else if (scene == "cave" || scene == "sky") effect = "pulse:purple";
+        else effect = "pulse:yellow";
     }
     if (effect == "off") { off(); return; }
     if (effect == "rainbow") mode = RAINBOW;
@@ -108,26 +108,34 @@ void update() {
     uint32_t now = millis();
     if (now - last_update < 25) return;
     last_update = now;
+    uint32_t elapsed = now - started;
+    uint16_t duration = mode == STEADY ? 700 : mode == PULSE ? 1300
+                        : mode == BLINK ? 900 : 1500;
+    if (elapsed >= duration) { off(); return; }
     if (bedtime_mode) {
-        if (mode == RAINBOW) write_rgb(12, 5, 0);
-        else write_rgb(color[0] / 6, color[1] / 6, color[2] / 6);
+        if (mode == RAINBOW) write_rgb(4, 2, 0);
+        else write_rgb(color[0] / 4, color[1] / 4, color[2] / 4);
         return;
     }
     if (mode == RAINBOW) {
         static const uint8_t wheel[6][3] = {
-            {90, 0, 0}, {90, 55, 0}, {0, 80, 0},
-            {0, 75, 80}, {0, 20, 100}, {70, 0, 90}
+            {16, 0, 0}, {16, 9, 0}, {0, 14, 0},
+            {0, 12, 13}, {0, 3, 16}, {12, 0, 16}
         };
-        uint32_t step = (now - started) % 3600 / 600;
+        uint32_t step = elapsed / 250;
         write_rgb(wheel[step][0], wheel[step][1], wheel[step][2]);
         return;
     }
     uint16_t level = 255;
-    if (mode == BLINK) level = ((now - started) % 600 < 300) ? 255 : 0;
+    if (mode == STEADY) {
+        if (elapsed < 100) level = elapsed * 255 / 100;
+        else if (elapsed > 500) level = (700 - elapsed) * 255 / 200;
+    }
+    if (mode == BLINK) level = (elapsed < 180 || (elapsed >= 450 && elapsed < 630)) ? 255 : 0;
     if (mode == PULSE) {
-        uint16_t phase = (now - started) % 2000;
-        level = phase < 1000 ? 26 + phase * 229 / 1000
-                             : 26 + (2000 - phase) * 229 / 1000;
+        uint16_t phase = elapsed % 650;
+        level = phase < 325 ? phase * 255 / 325
+                            : (650 - phase) * 255 / 325;
     }
     write_rgb(color[0] * level / 255, color[1] * level / 255, color[2] * level / 255);
 #endif
