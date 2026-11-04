@@ -92,6 +92,7 @@ struct Node_t
     std::vector<String> props;      /**< Things on the scene ("ball", "cake"...), when props_set */
     bool props_set = false;         /**< The page lists its props (even none); otherwise they come from the text */
     String sound;                   /**< Sound effect played when the page opens ("success", "oops"...) */
+    String led;                     /**< Optional RGB light cue ("red", "pulse:blue", "rainbow"...) */
 
     // Inventory choice fields
     bool inventory_choice;     /**< True if node shows inventory for selection */

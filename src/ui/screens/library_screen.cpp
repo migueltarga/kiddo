@@ -20,6 +20,7 @@
 #include "file_system.h"
 #include "async_manager.h"
 #include "audio.h"
+#include "led_effects.h"
 #include "ui/components/ui_components.h"
 #include "ui/router.h"
 #include "story_utils.h"
@@ -259,6 +260,7 @@ static void create_story_card(lv_obj_t *list, const char *title, const char *sym
 extern void ui_app_before_screen_change();
 void ui_library_screen_show()
 {
+	led_effects::off();
 	ui_app_before_screen_change();
 	lv_obj_t *scr = lv_scr_act();
 	lv_obj_clean(scr);
