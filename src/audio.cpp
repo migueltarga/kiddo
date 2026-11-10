@@ -296,6 +296,7 @@ namespace
             uint32_t remaining = wav.bytes;
             bool output_on = true;
             uint8_t buffer[512];
+            uint8_t blocks_since_yield = 0;
             while (remaining >= wav.bits / 8 && epoch == g_narration_epoch.load()) {
                 if (g_narration_paused.load()) {
                     if (output_on) {
@@ -327,6 +328,13 @@ namespace
                     dac_output_voltage(AUDIO_DAC_CHANNEL, value);
                     next_us += sample_us;
                     while ((int32_t)(micros() - next_us) < 0 && epoch == g_narration_epoch.load()) {}
+                }
+                // A page can run for tens of seconds. Let the idle task run
+                // regularly so the ESP32 task watchdog does not reset playback.
+                if (++blocks_since_yield >= 4) {
+                    blocks_since_yield = 0;
+                    vTaskDelay(1);
+                    next_us = micros();
                 }
             }
             if (output_on) end_audio_output();

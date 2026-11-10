@@ -8,6 +8,7 @@
 
 #include "story_engine.h"
 #include "models.h"
+#include "builtin_narration.h"
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
 
@@ -110,6 +111,8 @@ static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
             nn.props_set = parseNames(n["props"], nn.props);
             nn.sound = n["sound"].is<const char *>() ? n["sound"].as<const char *>() : "";
             nn.narration = n["narration"].is<const char *>() ? n["narration"].as<const char *>() : "";
+            if (nn.narration.length() == 0)
+                nn.narration = builtin_narration::path_for(out.file, out.id, key);
             nn.led = n["led"].is<const char *>() ? n["led"].as<const char *>() : "";
             
             // Parse inventory choice fields
