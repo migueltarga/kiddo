@@ -10,7 +10,9 @@
           "text": "Entrar na porta",
           "next": "bosque"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/inicio.wav",
+      "narration_timing": "audio/story_adventure_pt/inicio.words.json"
     },
     "bosque": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/2.jpg[/img]Zoe segura forte a mão de Ted e atravessa a porta.\nDe repente, eles estão em um bosque encantado cheio de flores coloridas e um cheirinho doce.\nDois caminhos aparecem na frente deles.",
@@ -23,7 +25,9 @@
           "text": "Caminho das pedras",
           "next": "pedras"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/bosque.wav",
+      "narration_timing": "audio/story_adventure_pt/bosque.words.json"
     },
     "flores": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/3.jpg[/img]O caminho das flores é macio e brilhante.\nMuitas borboletas azuis, vermelhas e amarelas voam por todo lado.\nUma borboleta gigante pousa na frente deles e fala com voz suave.",
@@ -32,7 +36,9 @@
           "text": "Ouvir borboleta",
           "next": "borboleta_fala"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/flores.wav",
+      "narration_timing": "audio/story_adventure_pt/flores.words.json"
     },
     "borboleta_fala": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/4.jpg[/img]A borboleta sorri: 'Olá, Zoe e Ted! Sei de um lugar secreto com muitas magias.\n Querem que eu os leve até lá?'",
@@ -45,7 +51,9 @@
           "text": "Seguir sozinhos",
           "next": "sozinhos"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/borboleta_fala.wav",
+      "narration_timing": "audio/story_adventure_pt/borboleta_fala.words.json"
     },
     "ajuda_borboleta": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/6.jpg[/img]A borboleta guia Zoe e Ted entre as flores até chegar em uma árvore enorme.\nDentro dela há um baú dourado.\nZoe abre o baú e encontra vários brinquedos mágicos que se movem sozinhos e conversam com ela.",
@@ -54,11 +62,15 @@
           "text": "Brincar com brinquedos",
           "next": "fim_brinquedos"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/ajuda_borboleta.wav",
+      "narration_timing": "audio/story_adventure_pt/ajuda_borboleta.words.json"
     },
     "fim_brinquedos": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe e Ted brincam até cansar, rindo muito com os brinquedos mágicos.\nQuando o sol começa a se por, eles voltam felizes para casa, levando lembranças do bosque encantado.",
-      "end": true
+      "end": true,
+      "narration": "audio/story_adventure_pt/fim_brinquedos.wav",
+      "narration_timing": "audio/story_adventure_pt/fim_brinquedos.words.json"
     },
     "sozinhos": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/7.jpg[/img]Zoe e Ted decidem continuar sem ajuda.\n Eles seguem por uma trilha florida até encontrar um lago calmo e cheio de peixinhos coloridos.",
@@ -67,7 +79,9 @@
           "text": "Olhar lago",
           "next": "lago"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/sozinhos.wav",
+      "narration_timing": "audio/story_adventure_pt/sozinhos.words.json"
     },
     "lago": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/8.jpg[/img]Eles se sentam na beira do lago, jogam pedrinhas na água e observam os círculos se formando.\nTed quase cai dentro da água e Zoe dá muita risada.",
@@ -76,11 +90,15 @@
           "text": "Explorar mais",
           "next": "fim_lago"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/lago.wav",
+      "narration_timing": "audio/story_adventure_pt/lago.words.json"
     },
     "fim_lago": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Depois da diversão no lago, Zoe e Ted encontram um caminho de volta para a porta mágica.\nEles voltam para o quarto, felizes com a aventura.",
-      "end": true
+      "end": true,
+      "narration": "audio/story_adventure_pt/fim_lago.wav",
+      "narration_timing": "audio/story_adventure_pt/fim_lago.words.json"
     },
     "pedras": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/10.jpg[/img]O caminho das pedras brilha como estrelas no chão.\nNo final da trilha, uma ponte de madeira aparece.\nEla é guardada por um sapo falante.",
@@ -89,7 +107,9 @@
           "text": "Falar com sapo",
           "next": "sapo"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/pedras.wav",
+      "narration_timing": "audio/story_adventure_pt/pedras.words.json"
     },
     "sapo": {
       "text": "O sapo diz: 'Para passar pela ponte, vocês precisam responder a minha charada: O que sobe e desce mas nunca sai do lugar?'",
@@ -102,7 +122,9 @@
           "text": "Responder nuvem",
           "next": "resposta_errada"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/sapo.wav",
+      "narration_timing": "audio/story_adventure_pt/sapo.words.json"
     },
     "resposta_certa": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/11.jpg[/img]Zoe responde: 'É a escada!' O sapo sorri e deixa eles passarem.\nDo outro lado, há um jardim mágico cheio de brinquedos encantados que dançam sozinhos.",
@@ -111,11 +133,15 @@
           "text": "Explorar jardim",
           "next": "fim_jardim"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/resposta_certa.wav",
+      "narration_timing": "audio/story_adventure_pt/resposta_certa.words.json"
     },
     "fim_jardim": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/9.jpg[/img]Zoe e Ted brincam no jardim encantado até ficarem sonolentos.\nQuando voltam para casa, Ted cochila nos braços de Zoe, que sorri feliz com a aventura.",
-      "end": true
+      "end": true,
+      "narration": "audio/story_adventure_pt/fim_jardim.wav",
+      "narration_timing": "audio/story_adventure_pt/fim_jardim.words.json"
     },
     "resposta_errada": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Ted responde: 'É a nuvem!' O sapo dá uma risada: 'Não é isso!' Mesmo assim, ele deixa eles descansarem debaixo de uma árvore próxima.",
@@ -124,11 +150,15 @@
           "text": "Descansar",
           "next": "fim_descanso"
         }
-      ]
+      ],
+      "narration": "audio/story_adventure_pt/resposta_errada.wav",
+      "narration_timing": "audio/story_adventure_pt/resposta_errada.words.json"
     },
     "fim_descanso": {
       "text": "[img]https://raw.githubusercontent.com/migueltarga/kiddo/refs/heads/main/stories/images/adventure/12.jpg[/img]Zoe e Ted dormem um pouquinho debaixo da árvore e acordam já no quarto de Zoe.\nA porta mágica desapareceu, mas a lembrança da aventura ficou no coração deles.",
-      "end": true
+      "end": true,
+      "narration": "audio/story_adventure_pt/fim_descanso.wav",
+      "narration_timing": "audio/story_adventure_pt/fim_descanso.words.json"
     }
   }
 }

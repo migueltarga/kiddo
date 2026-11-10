@@ -99,7 +99,8 @@ static const LocalizedStrings strings_en = {
     "Volume",
     "Auto brightness",
     "Bedtime mode",
-    "Limits screen brightness, sound and lights."
+    "Limits screen brightness, sound and lights.",
+    "Play narration", "Pause narration", "Resume narration", "Loading audio...", "Retry narration"
 };
 
 static const LocalizedStrings strings_pt = {
@@ -188,7 +189,8 @@ static const LocalizedStrings strings_pt = {
     "Volume",
     "Brilho automático",
     "Modo de dormir",
-    "Reduz o brilho da tela, o som e as luzes."
+    "Reduz o brilho da tela, o som e as luzes.",
+    "Ouvir narração", "Pausar narração", "Continuar narração", "Carregando áudio...", "Tentar de novo"
 };
 
 const LocalizedStrings *S()

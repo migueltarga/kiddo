@@ -129,6 +129,11 @@ struct LocalizedStrings
   const char *auto_brightness;          /**< Automatic display brightness */
   const char *bedtime_mode;             /**< Bedtime preset label */
   const char *bedtime_hint;             /**< Bedtime preset explanation */
+  const char *narration_play;
+  const char *narration_pause;
+  const char *narration_resume;
+  const char *narration_loading;
+  const char *narration_retry;
 };
 
 /**

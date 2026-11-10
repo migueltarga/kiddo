@@ -76,6 +76,8 @@ Once a story is downloaded, the device keeps its copy. If you change the story l
 | `gives_item` | Item id added to the backpack when the page opens. |
 | `scene`, `cast`, `props` | Override the animated scene, see [Scenes](#scenes). |
 | `sound` | Sound played when the page opens, see [Sounds](#sounds). |
+| `narration` | Optional spoken recording with a play/pause button on the 3.5-inch board, see [Narration](#narration). |
+| `narration_timing` | Optional word-start timing file for spoken-word highlighting, see [Narration](#narration). |
 | `led` | Optional RGB light effect on the 3.5-inch ESP32-3248S035C, see [Lights](#lights). |
 | `inventory_choice`, `correct_item`, `success_next`, `failure_next` | A backpack puzzle, see below. |
 
@@ -247,6 +249,30 @@ With a speaker attached, pages play a sound when they open: a fanfare on endings
 | `fanfare` | A big moment. |
 | `boing` | Something funny. |
 | `page`, `click` | Quiet ticks. |
+
+## Narration
+
+On the ESP32-3248S035C, add `narration` to a page to show a play/pause button. The recording does not start automatically. Leaving the page stops it; the button can pause, resume, or replay it. The Settings volume and bedtime limit also apply.
+
+```json
+"beginning": {
+  "text": "It was bedtime, but the Moon was gone!",
+  "narration": "https://example.com/audio/beginning.wav",
+  "choices": [{ "text": "Look outside", "next": "yard" }]
+}
+```
+
+Use a `.wav` file relative to the story catalog, a full HTTP(S) URL, or a local SPIFFS path such as `/beginning.wav`. The file must be an uncompressed PCM WAV with one channel, 8-bit unsigned or 16-bit signed samples, at 8,000 to 22,050 samples per second. Keep recordings short because the board has limited storage. The device keeps the most recently played downloaded recording for offline replay; *Settings > Clear Cache* removes it. If the download or format fails, the button offers a retry. Other boards ignore `narration`.
+
+Add `narration_timing` to highlight the word being read. It points to a small JSON file beside the WAV:
+
+```json
+{"method":"estimated","duration_ms":4200,"starts_ms":[120,490,910,1410,2040]}
+```
+
+`starts_ms` contains one start time in milliseconds for each whitespace-separated word in the page text, excluding image tags. The device colors and bolds the current word while narration plays and holds its place when paused. Timing files produced from existing audio by `scripts/generate_word_timings.py` are estimated; exact word timestamps can replace the numbers later without changing the story format. If a timing file is absent, the reader follows the recording approximately.
+
+To prepare the Portuguese stories with an ElevenLabs voice, preview the number of pages with `python3 scripts/generate_narration.py --dry-run`, then run `python3 scripts/generate_narration.py --voice-id VOICE_ID`. The script prompts privately for the API key, needs `ffmpeg`, and resumes by skipping WAV files already generated. It places WAV and timing files under `stories/audio/` and adds both paths to each page. Run `python3 scripts/generate_word_timings.py` to create timing files for recordings that already exist.
 
 ## Lights
 

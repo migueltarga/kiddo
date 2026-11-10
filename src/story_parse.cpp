@@ -8,6 +8,7 @@
 
 #include "story_engine.h"
 #include "models.h"
+#include "builtin_narration.h"
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
 
@@ -42,6 +43,7 @@ static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
         out.id = doc["id"].as<const char *>();
         out.title = doc["title"].as<const char *>();
         out.start = doc["start"].as<const char *>();
+        out.source_url = doc["_source_url"].is<const char *>() ? doc["_source_url"].as<const char *>() : "";
         if (out.id.length() == 0 || out.start.length() == 0)
             return false;
             
@@ -108,6 +110,14 @@ static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
             nn.cast_set = parseNames(n["cast"], nn.cast);
             nn.props_set = parseNames(n["props"], nn.props);
             nn.sound = n["sound"].is<const char *>() ? n["sound"].as<const char *>() : "";
+            nn.narration = n["narration"].is<const char *>() ? n["narration"].as<const char *>() : "";
+            nn.narration_timing = n["narration_timing"].is<const char *>() ? n["narration_timing"].as<const char *>() : "";
+            if (nn.narration.length() == 0)
+                nn.narration = builtin_narration::path_for(out.file, out.id, key);
+            if (nn.narration_timing.length() == 0 && nn.narration.startsWith("audio/") &&
+                nn.narration.endsWith(".wav")) {
+                nn.narration_timing = nn.narration.substring(0, nn.narration.length() - 4) + ".words.json";
+            }
             nn.led = n["led"].is<const char *>() ? n["led"].as<const char *>() : "";
             
             // Parse inventory choice fields
