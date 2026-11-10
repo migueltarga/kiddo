@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <lvgl.h>
 #include <SPIFFS.h>
+#include <ArduinoJson.h>
 #include <vector>
 #include <atomic>
 #include "config.h"
@@ -70,9 +71,13 @@ namespace
     SemaphoreHandle_t g_narration_mutex = nullptr;
     TaskHandle_t g_narration_task = nullptr;
     String g_narration_source;
+    String g_narration_timing_source;
+    std::vector<uint32_t> g_narration_word_starts;
     std::atomic<uint32_t> g_narration_epoch{0};
     std::atomic<bool> g_narration_paused{false};
     std::atomic<audio::NarrationState> g_narration_state{audio::NarrationState::Idle};
+    std::atomic<uint32_t> g_narration_position_ms{0};
+    std::atomic<uint32_t> g_narration_duration_ms{0};
 
     uint16_t read_u16(File &file)
     {
@@ -138,6 +143,35 @@ namespace
         char name[24];
         snprintf(name, sizeof(name), "/cache/v%08lx.wav", (unsigned long)hash);
         return String(name);
+    }
+
+    std::vector<uint32_t> load_word_starts(const String &source)
+    {
+        std::vector<uint32_t> starts;
+        if (source.length() == 0) return starts;
+        String path = source;
+        if (source.startsWith("https://") || source.startsWith("http://")) {
+            path = narration_cache_path(source);
+            path.replace(".wav", ".tim");
+            if (FileSystem::fileSize(path) == 0 && !FileSystem::downloadFile(source, path))
+                return starts;
+        }
+        File file = SPIFFS.open(path, "r");
+        if (!file) return starts;
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, file);
+        file.close();
+        if (error || !doc["starts_ms"].is<JsonArray>()) {
+            if (source.startsWith("https://") || source.startsWith("http://")) FileSystem::deleteFile(path);
+            return starts;
+        }
+        for (JsonVariant value : doc["starts_ms"].as<JsonArray>()) {
+            if (starts.size() >= 256 || (!value.is<int>() && !value.is<unsigned int>())) return {};
+            uint32_t ms = value.as<uint32_t>();
+            if ((!starts.empty() && ms < starts.back()) || ms > 120000) return {};
+            starts.push_back(ms);
+        }
+        return starts;
     }
 #endif
 
@@ -253,6 +287,7 @@ namespace
             uint32_t epoch = g_narration_epoch.load();
             xSemaphoreTake(g_narration_mutex, portMAX_DELAY);
             String source = g_narration_source;
+            String timing_source = g_narration_timing_source;
             xSemaphoreGive(g_narration_mutex);
 
             String path = source;
@@ -263,7 +298,8 @@ namespace
                     // recording at a time so the next page has room to download.
                     for (const String &name : FileSystem::listFiles("/cache")) {
                         String old_path = name.startsWith("/") ? name : "/cache/" + name;
-                        if (old_path.startsWith("/cache/v") && old_path.endsWith(".wav"))
+                        if (old_path.startsWith("/cache/v") &&
+                            (old_path.endsWith(".wav") || old_path.endsWith(".tim")))
                             FileSystem::deleteFile(old_path);
                     }
                     if (!FileSystem::downloadFile(source, path)) {
@@ -273,6 +309,11 @@ namespace
                 }
             }
             if (epoch != g_narration_epoch.load()) continue;
+            std::vector<uint32_t> word_starts = load_word_starts(timing_source);
+            if (epoch != g_narration_epoch.load()) continue;
+            xSemaphoreTake(g_narration_mutex, portMAX_DELAY);
+            g_narration_word_starts = std::move(word_starts);
+            xSemaphoreGive(g_narration_mutex);
             File file = SPIFFS.open(path, "r");
             WavInfo wav;
             if (!file || !read_wav_header(file, wav)) {
@@ -294,6 +335,8 @@ namespace
             const uint32_t sample_us = 1000000u / wav.rate;
             uint32_t next_us = micros();
             uint32_t remaining = wav.bytes;
+            const uint32_t bytes_per_sample = wav.bits / 8;
+            g_narration_duration_ms.store((uint64_t(wav.bytes / bytes_per_sample) * 1000) / wav.rate);
             bool output_on = true;
             uint8_t buffer[512];
             uint8_t blocks_since_yield = 0;
@@ -329,6 +372,8 @@ namespace
                     next_us += sample_us;
                     while ((int32_t)(micros() - next_us) < 0 && epoch == g_narration_epoch.load()) {}
                 }
+                g_narration_position_ms.store((uint64_t(wav.bytes - remaining) * 1000) /
+                                               (wav.rate * bytes_per_sample));
                 // A page can run for tens of seconds. Let the idle task run
                 // regularly so the ESP32 task watchdog does not reset playback.
                 if (++blocks_since_yield >= 4) {
@@ -401,7 +446,7 @@ namespace audio
         play(Sound::Click);
     }
 
-    bool play_narration(const String &source)
+    bool play_narration(const String &source, const String &timing_source)
     {
 #ifdef KIDDO_3248S035C
         if (!g_narration_task || source.length() == 0 || source.length() > 240 ||
@@ -410,14 +455,19 @@ namespace audio
         g_narration_epoch.fetch_add(1);
         g_narration_paused.store(false);
         g_narration_state.store(NarrationState::Loading);
+        g_narration_position_ms.store(0);
+        g_narration_duration_ms.store(0);
         xSemaphoreTake(g_narration_mutex, portMAX_DELAY);
         g_narration_source = source;
+        g_narration_timing_source = timing_source;
+        g_narration_word_starts.clear();
         xSemaphoreGive(g_narration_mutex);
         xQueueReset(g_queue); // A page's old effects must not play after narration.
         xTaskNotifyGive(g_narration_task);
         return true;
 #else
         (void)source;
+        (void)timing_source;
         return false;
 #endif
     }
@@ -442,6 +492,8 @@ namespace audio
         g_narration_epoch.fetch_add(1);
         g_narration_paused.store(false);
         g_narration_state.store(NarrationState::Idle);
+        g_narration_position_ms.store(0);
+        g_narration_duration_ms.store(0);
 #endif
     }
 
@@ -451,6 +503,37 @@ namespace audio
         return g_narration_state.load();
 #else
         return NarrationState::Idle;
+#endif
+    }
+
+    uint32_t narration_position_ms()
+    {
+#ifdef KIDDO_3248S035C
+        return g_narration_position_ms.load();
+#else
+        return 0;
+#endif
+    }
+
+    uint32_t narration_duration_ms()
+    {
+#ifdef KIDDO_3248S035C
+        return g_narration_duration_ms.load();
+#else
+        return 0;
+#endif
+    }
+
+    std::vector<uint32_t> narration_word_starts()
+    {
+#ifdef KIDDO_3248S035C
+        if (!g_narration_mutex) return {};
+        xSemaphoreTake(g_narration_mutex, portMAX_DELAY);
+        std::vector<uint32_t> starts = g_narration_word_starts;
+        xSemaphoreGive(g_narration_mutex);
+        return starts;
+#else
+        return {};
 #endif
     }
 

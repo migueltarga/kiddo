@@ -16,6 +16,7 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from generate_word_timings import create_timing
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,6 +107,9 @@ def main():
                 generate_audio(key, args.voice_id, text, mp3_path)
                 convert_for_device(mp3_path, wav_path)
         story['nodes'][node_key]['narration'] = relative.as_posix()
+        timing_relative = relative.with_suffix('.words.json')
+        create_timing(wav_path, story['nodes'][node_key].get('text', ''), STORIES / timing_relative)
+        story['nodes'][node_key]['narration_timing'] = timing_relative.as_posix()
         path.write_text(json.dumps(story, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(f'[{number}/{len(jobs)}] {path.name}: {node_key} ({wav_path.stat().st_size} bytes)', flush=True)
 

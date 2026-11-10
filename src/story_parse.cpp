@@ -111,8 +111,13 @@ static bool parseStoryDoc(JsonDocument &doc, Story_t &out)
             nn.props_set = parseNames(n["props"], nn.props);
             nn.sound = n["sound"].is<const char *>() ? n["sound"].as<const char *>() : "";
             nn.narration = n["narration"].is<const char *>() ? n["narration"].as<const char *>() : "";
+            nn.narration_timing = n["narration_timing"].is<const char *>() ? n["narration_timing"].as<const char *>() : "";
             if (nn.narration.length() == 0)
                 nn.narration = builtin_narration::path_for(out.file, out.id, key);
+            if (nn.narration_timing.length() == 0 && nn.narration.startsWith("audio/") &&
+                nn.narration.endsWith(".wav")) {
+                nn.narration_timing = nn.narration.substring(0, nn.narration.length() - 4) + ".words.json";
+            }
             nn.led = n["led"].is<const char *>() ? n["led"].as<const char *>() : "";
             
             // Parse inventory choice fields

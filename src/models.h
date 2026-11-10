@@ -93,6 +93,7 @@ struct Node_t
     bool props_set = false;         /**< The page lists its props (even none); otherwise they come from the text */
     String sound;                   /**< Sound effect played when the page opens ("success", "oops"...) */
     String narration;               /**< Optional local WAV path or HTTPS URL for spoken page audio */
+    String narration_timing;        /**< Optional word-start timing file for narration */
     String led;                     /**< Optional RGB light cue ("red", "pulse:blue", "rainbow"...) */
 
     // Inventory choice fields

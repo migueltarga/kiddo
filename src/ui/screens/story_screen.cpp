@@ -28,6 +28,7 @@
 #include "story_progress.h"
 #include "remote_catalog.h"
 #include <set>
+#include <ctype.h>
 
 extern void ui_library_screen_show();
 extern void ui_story_set_home_cb(void (*cb)());
@@ -142,11 +143,96 @@ static void show_end_fullscreen()
 
 static void show_node(const String &key);
 
+struct NarrationText {
+	lv_obj_t *label;
+	String original;
+};
+
+struct NarrationWord {
+	uint16_t text_index;
+	uint16_t begin;
+	uint16_t end;
+};
+
 struct NarrationControl {
 	String source;
+	String timing_source;
 	lv_obj_t *label;
 	lv_timer_t *timer;
+	std::vector<NarrationText> texts;
+	std::vector<NarrationWord> words;
+	std::vector<uint32_t> starts;
+	int active_word = -1;
+	NarrationControl(const String &audio_source, const String &word_timing_source, lv_obj_t *button_label)
+		: source(audio_source), timing_source(word_timing_source), label(button_label), timer(nullptr) {}
 };
+
+static void add_narration_text(NarrationControl *control, lv_obj_t *label, const String &text)
+{
+	uint16_t text_index = control->texts.size();
+	control->texts.push_back({label, text});
+	lv_label_set_recolor(label, true);
+	for (size_t i = 0; i < text.length();) {
+		while (i < text.length() && isspace((unsigned char)text[i])) ++i;
+		if (i >= text.length()) break;
+		size_t begin = i;
+		while (i < text.length() && !isspace((unsigned char)text[i])) ++i;
+		control->words.push_back({text_index, uint16_t(begin), uint16_t(i)});
+	}
+}
+
+static void set_narration_word(NarrationControl *control, int index)
+{
+	if (index == control->active_word) return;
+	if (control->active_word >= 0) {
+		const auto &old = control->words[control->active_word];
+		const auto &text = control->texts[old.text_index];
+		lv_label_set_text(text.label, text.original.c_str());
+	}
+	control->active_word = index;
+	if (index < 0) return;
+	const auto &word = control->words[index];
+	const auto &text = control->texts[word.text_index];
+	String marked = text.original.substring(0, word.begin) + "#A84223 " +
+	                text.original.substring(word.begin, word.end) + "#" +
+	                text.original.substring(word.end);
+	lv_label_set_text(text.label, marked.c_str());
+}
+
+static void update_narration_word(NarrationControl *control)
+{
+	auto state = audio::narration_state();
+	if ((state != audio::NarrationState::Playing && state != audio::NarrationState::Paused) ||
+	    control->words.empty()) {
+		set_narration_word(control, -1);
+		if (state == audio::NarrationState::Loading) control->starts.clear();
+		return;
+	}
+	if (control->starts.empty()) {
+		control->starts = audio::narration_word_starts();
+		if (control->starts.size() != control->words.size()) {
+			// A page without a timing file can still follow the recording approximately.
+			control->starts.clear();
+			uint32_t duration = audio::narration_duration_ms();
+			if (duration == 0) return;
+			uint32_t total_weight = 0;
+			for (const auto &word : control->words)
+				total_weight += 4 + (word.end - word.begin);
+			uint32_t elapsed_weight = 0;
+			for (const auto &word : control->words) {
+				control->starts.push_back(uint64_t(elapsed_weight) * duration / total_weight);
+				elapsed_weight += 4 + (word.end - word.begin);
+			}
+		}
+	}
+	uint32_t position = audio::narration_position_ms();
+	int index = -1;
+	for (size_t i = 0; i < control->starts.size(); ++i) {
+		if (control->starts[i] > position) break;
+		index = i;
+	}
+	set_narration_word(control, index);
+}
 
 static void update_narration_label(NarrationControl *control)
 {
@@ -164,7 +250,8 @@ static void update_narration_label(NarrationControl *control)
 		lv_label_set_text(control->label, label);
 }
 
-static void add_narration_button(lv_obj_t *content, const String &source)
+static NarrationControl *add_narration_button(lv_obj_t *content, const String &source,
+	                                         const String &timing_source)
 {
 	lv_obj_t *button = lv_btn_create(content);
 	apply_secondary_button_style(button);
@@ -172,10 +259,12 @@ static void add_narration_button(lv_obj_t *content, const String &source)
 	lv_obj_set_height(button, 36);
 	lv_obj_t *label = lv_label_create(button);
 	lv_obj_center(label);
-	auto *control = new NarrationControl{source, label, nullptr};
+	auto *control = new NarrationControl(source, timing_source, label);
 	update_narration_label(control);
 	control->timer = lv_timer_create([](lv_timer_t *t) {
-		update_narration_label(static_cast<NarrationControl *>(lv_timer_get_user_data(t)));
+		auto *control = static_cast<NarrationControl *>(lv_timer_get_user_data(t));
+		update_narration_label(control);
+		update_narration_word(control);
 	}, 150, control);
 	lv_obj_add_event_cb(button, [](lv_event_t *e) {
 		auto *c = static_cast<NarrationControl *>(lv_event_get_user_data(e));
@@ -183,7 +272,7 @@ static void add_narration_button(lv_obj_t *content, const String &source)
 		case audio::NarrationState::Playing: audio::pause_narration(); break;
 		case audio::NarrationState::Paused: audio::resume_narration(); break;
 		case audio::NarrationState::Loading: break;
-		default: audio::play_narration(c->source); break;
+		default: audio::play_narration(c->source, c->timing_source); break;
 		}
 		update_narration_label(c);
 	}, LV_EVENT_CLICKED, control);
@@ -192,6 +281,7 @@ static void add_narration_button(lv_obj_t *content, const String &source)
 		lv_timer_delete(c->timer);
 		delete c;
 	}, LV_EVENT_DELETE, control);
+	return control;
 }
 
 /** @brief Image URLs already queued for download in this story */
@@ -425,15 +515,18 @@ static void show_node(const String &key)
 	lv_obj_set_scrollbar_mode(content, LV_SCROLLBAR_MODE_AUTO);
 	apply_scrollbar_style(content);
 
+	NarrationControl *narration_control = nullptr;
 #ifdef KIDDO_3248S035C
 	if (n->narration.length() > 0) {
-		String source = n->narration;
-		if (!source.startsWith("/") && !source.startsWith("http://") && !source.startsWith("https://")) {
+		auto media_url = [&](String source) {
+			if (source.length() == 0 || source.startsWith("/") ||
+			    source.startsWith("http://") || source.startsWith("https://")) return source;
 			int slash = g_story.source_url.lastIndexOf('/');
-			source = slash > 0 ? g_story.source_url.substring(0, slash + 1) + source
-			                   : remote_catalog::storyUrl(source);
-		}
-		add_narration_button(content, source);
+			return slash > 0 ? g_story.source_url.substring(0, slash + 1) + source
+			                 : remote_catalog::storyUrl(source);
+		};
+		narration_control = add_narration_button(content, media_url(n->narration),
+		                                       media_url(n->narration_timing));
 	}
 #endif
 
@@ -472,6 +565,8 @@ static void show_node(const String &key)
 				lv_obj_set_style_text_font(text_label, story_body_font(), 0);
 				lv_obj_set_style_text_color(text_label, palette::ink(), 0);
 				lv_obj_set_style_text_line_space(text_label, 2, 0);
+				if (narration_control)
+					add_narration_text(narration_control, text_label, segment.content);
 			}
 		} else if (segment.type == KiddoParser::ContentSegment::IMAGE) {
 			lv_obj_t *img_wrapper = lv_obj_create(text_wrap);

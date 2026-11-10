@@ -16,7 +16,9 @@ Exits with status 1 if any problem is found.
 
 import json
 import os
+import re
 import sys
+import wave
 from urllib.parse import urlparse
 
 # Mirrors remote_catalog::isValidFileName() on the device
@@ -103,6 +105,30 @@ def check_story(story, root=None):
                     issues.append(f'{key}: narration must be a safe relative .wav path, HTTP(S) URL, or local path')
                 elif root and not os.path.isfile(os.path.join(root, narration)):
                     issues.append(f'{key}: narration file "{narration}" does not exist')
+        timing = node.get('narration_timing')
+        if timing is not None:
+            if not narration:
+                issues.append(f'{key}: narration_timing needs narration')
+            elif not isinstance(timing, str) or not timing.endswith('.words.json') or timing.startswith(('/', '.')) or '..' in timing or '\\' in timing:
+                issues.append(f'{key}: narration_timing must be a safe relative .words.json path')
+            elif root:
+                timing_path = os.path.join(root, timing)
+                if not os.path.isfile(timing_path):
+                    issues.append(f'{key}: timing file "{timing}" does not exist')
+                else:
+                    data = json.load(open(timing_path, encoding='utf-8'))
+                    starts = data.get('starts_ms')
+                    visible = re.sub(r'\[img\].*?\[/img\]', '', node.get('text', ''), flags=re.DOTALL)
+                    words = visible.split()
+                    if (not isinstance(starts, list) or len(starts) != len(words) or
+                            any(not isinstance(x, int) or x < 0 for x in starts) or
+                            starts != sorted(starts)):
+                        issues.append(f'{key}: timing file needs one ordered start per visible word')
+                    elif narration.startswith('audio/'):
+                        with wave.open(os.path.join(root, narration), 'rb') as wav:
+                            duration_ms = wav.getnframes() * 1000 // wav.getframerate()
+                        if starts and starts[-1] > duration_ms:
+                            issues.append(f'{key}: timing exceeds recording duration')
         if 'led' in node and node['led'] not in LED_EFFECTS:
             issues.append(f'{key}: unknown led effect "{node["led"]}"')
         for choice in node.get('choices', []):
