@@ -163,6 +163,8 @@ struct NarrationControl {
 	std::vector<NarrationWord> words;
 	std::vector<uint32_t> starts;
 	int active_word = -1;
+	lv_obj_t *bold_word = nullptr;
+	lv_obj_t *bold_parent = nullptr;
 	NarrationControl(const String &audio_source, const String &word_timing_source, lv_obj_t *button_label)
 		: source(audio_source), timing_source(word_timing_source), label(button_label), timer(nullptr) {}
 };
@@ -190,13 +192,39 @@ static void set_narration_word(NarrationControl *control, int index)
 		lv_label_set_text(text.label, text.original.c_str());
 	}
 	control->active_word = index;
-	if (index < 0) return;
+	if (index < 0) {
+		if (control->bold_word) lv_obj_add_flag(control->bold_word, LV_OBJ_FLAG_HIDDEN);
+		return;
+	}
 	const auto &word = control->words[index];
 	const auto &text = control->texts[word.text_index];
+	// Find the glyph position before inserting the color markup. UTF-8 accents
+	// occupy multiple bytes but only one character position on screen.
+	uint32_t character_index = 0;
+	for (uint16_t i = 0; i < word.begin; ++i)
+		if ((uint8_t(text.original[i]) & 0xC0) != 0x80) ++character_index;
+	lv_point_t position;
+	lv_label_get_letter_pos(text.label, character_index, &position);
 	String marked = text.original.substring(0, word.begin) + "#A84223 " +
 	                text.original.substring(word.begin, word.end) + "#" +
 	                text.original.substring(word.end);
 	lv_label_set_text(text.label, marked.c_str());
+	if (control->bold_parent != text.label) {
+		if (control->bold_word) lv_obj_delete(control->bold_word);
+		control->bold_word = lv_label_create(text.label);
+		control->bold_parent = text.label;
+		lv_obj_add_flag(control->bold_word, LV_OBJ_FLAG_IGNORE_LAYOUT);
+		lv_obj_set_style_bg_opa(control->bold_word, LV_OPA_TRANSP, 0);
+		lv_obj_set_style_pad_all(control->bold_word, 0, 0);
+		lv_obj_set_style_text_font(control->bold_word, story_body_font(), 0);
+		lv_obj_set_style_text_color(control->bold_word, lv_color_hex(0xA84223), 0);
+		lv_obj_set_style_text_outline_stroke_color(control->bold_word, lv_color_hex(0xA84223), 0);
+		lv_obj_set_style_text_outline_stroke_width(control->bold_word, 1, 0);
+		lv_obj_set_style_text_outline_stroke_opa(control->bold_word, LV_OPA_COVER, 0);
+	}
+	lv_label_set_text(control->bold_word, text.original.substring(word.begin, word.end).c_str());
+	lv_obj_set_pos(control->bold_word, position.x, position.y);
+	lv_obj_remove_flag(control->bold_word, LV_OBJ_FLAG_HIDDEN);
 }
 
 static void update_narration_word(NarrationControl *control)
@@ -258,6 +286,7 @@ static NarrationControl *add_narration_button(lv_obj_t *content, const String &s
 	lv_obj_set_width(button, LV_PCT(100));
 	lv_obj_set_height(button, 36);
 	lv_obj_t *label = lv_label_create(button);
+	lv_obj_set_style_text_font(label, font14(), 0);
 	lv_obj_center(label);
 	auto *control = new NarrationControl(source, timing_source, label);
 	update_narration_label(control);

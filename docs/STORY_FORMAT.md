@@ -270,7 +270,7 @@ Add `narration_timing` to highlight the word being read. It points to a small JS
 {"method":"estimated","duration_ms":4200,"starts_ms":[120,490,910,1410,2040]}
 ```
 
-`starts_ms` contains one start time in milliseconds for each whitespace-separated word in the page text, excluding image tags. The device colors the current word while narration plays and holds its place when paused. Timing files produced from existing audio by `scripts/generate_word_timings.py` are estimated; exact word timestamps can replace the numbers later without changing the story format. If a timing file is absent, the reader follows the recording approximately.
+`starts_ms` contains one start time in milliseconds for each whitespace-separated word in the page text, excluding image tags. The device colors and bolds the current word while narration plays and holds its place when paused. Timing files produced from existing audio by `scripts/generate_word_timings.py` are estimated; exact word timestamps can replace the numbers later without changing the story format. If a timing file is absent, the reader follows the recording approximately.
 
 To prepare the Portuguese stories with an ElevenLabs voice, preview the number of pages with `python3 scripts/generate_narration.py --dry-run`, then run `python3 scripts/generate_narration.py --voice-id VOICE_ID`. The script prompts privately for the API key, needs `ffmpeg`, and resumes by skipping WAV files already generated. It places WAV and timing files under `stories/audio/` and adds both paths to each page. Run `python3 scripts/generate_word_timings.py` to create timing files for recordings that already exist.
 
