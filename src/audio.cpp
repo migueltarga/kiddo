@@ -302,7 +302,18 @@ namespace
                             (old_path.endsWith(".wav") || old_path.endsWith(".tim")))
                             FileSystem::deleteFile(old_path);
                     }
-                    if (!FileSystem::downloadFile(source, path)) {
+                    bool downloaded = false;
+                    for (int attempt = 0; attempt < 2 && epoch == g_narration_epoch.load(); ++attempt) {
+                        if (FileSystem::downloadFile(source, path)) {
+                            downloaded = true;
+                            break;
+                        }
+                        if (attempt == 0 && epoch == g_narration_epoch.load()) {
+                            Serial.println("[AUDIO] Narration download failed; retrying");
+                            vTaskDelay(pdMS_TO_TICKS(1500));
+                        }
+                    }
+                    if (!downloaded) {
                         if (epoch == g_narration_epoch.load()) g_narration_state.store(audio::NarrationState::Error);
                         continue;
                     }
