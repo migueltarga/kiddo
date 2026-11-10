@@ -26,6 +26,7 @@
 #include "ui_screens.h"
 #include "kiddo_parser.h"
 #include "story_progress.h"
+#include "remote_catalog.h"
 #include <set>
 
 extern void ui_library_screen_show();
@@ -36,6 +37,7 @@ extern void ui_story_set_home_cb(void (*cb)());
  * Cleans up inventory UI before showing library
  */
 static void safe_ui_library_screen_show() {
+	audio::stop_narration();
 	InventoryUI::cleanup();
 	ui_library_screen_show();
 }
@@ -118,6 +120,7 @@ static lv_obj_t *create_choice_button(lv_obj_t *parent, const char *text)
 
 static void show_end_fullscreen()
 {
+	audio::stop_narration();
 	lv_obj_t *scr = lv_scr_act();
 	lv_obj_clean(scr);
 	const auto *s = S();
@@ -138,6 +141,57 @@ static void show_end_fullscreen()
 }
 
 static void show_node(const String &key);
+
+struct NarrationControl {
+	String source;
+	lv_obj_t *label;
+	lv_timer_t *timer;
+};
+
+static void update_narration_label(NarrationControl *control)
+{
+	const auto *s = S();
+	const char *label = s->narration_play;
+	switch (audio::narration_state()) {
+	case audio::NarrationState::Loading: label = s->narration_loading; break;
+	case audio::NarrationState::Playing: label = s->narration_pause; break;
+	case audio::NarrationState::Paused: label = s->narration_resume; break;
+	case audio::NarrationState::Error: label = s->narration_retry; break;
+	default: break;
+	}
+	if (strcmp(lv_label_get_text(control->label), label) != 0)
+		lv_label_set_text(control->label, label);
+}
+
+static void add_narration_button(lv_obj_t *content, const String &source)
+{
+	lv_obj_t *button = lv_btn_create(content);
+	apply_secondary_button_style(button);
+	lv_obj_set_width(button, LV_PCT(100));
+	lv_obj_set_height(button, 36);
+	lv_obj_t *label = lv_label_create(button);
+	lv_obj_center(label);
+	auto *control = new NarrationControl{source, label, nullptr};
+	update_narration_label(control);
+	control->timer = lv_timer_create([](lv_timer_t *t) {
+		update_narration_label(static_cast<NarrationControl *>(lv_timer_get_user_data(t)));
+	}, 150, control);
+	lv_obj_add_event_cb(button, [](lv_event_t *e) {
+		auto *c = static_cast<NarrationControl *>(lv_event_get_user_data(e));
+		switch (audio::narration_state()) {
+		case audio::NarrationState::Playing: audio::pause_narration(); break;
+		case audio::NarrationState::Paused: audio::resume_narration(); break;
+		case audio::NarrationState::Loading: break;
+		default: audio::play_narration(c->source); break;
+		}
+		update_narration_label(c);
+	}, LV_EVENT_CLICKED, control);
+	lv_obj_add_event_cb(button, [](lv_event_t *e) {
+		auto *c = static_cast<NarrationControl *>(lv_event_get_user_data(e));
+		lv_timer_delete(c->timer);
+		delete c;
+	}, LV_EVENT_DELETE, control);
+}
 
 /** @brief Image URLs already queued for download in this story */
 static std::set<String> g_prefetched_images;
@@ -280,6 +334,7 @@ static void on_inventory_choice_clicked(lv_event_t *e)
 
 static void show_node(const String &key)
 {
+	audio::stop_narration();
 	if (g_story.id.length() == 0)
 		return;
 	const Node_t *n = g_story.get(key);
@@ -368,6 +423,18 @@ static void show_node(const String &key)
 	// Visible whenever the page continues below
 	lv_obj_set_scrollbar_mode(content, LV_SCROLLBAR_MODE_AUTO);
 	apply_scrollbar_style(content);
+
+#ifdef KIDDO_3248S035C
+	if (n->narration.length() > 0) {
+		String source = n->narration;
+		if (!source.startsWith("/") && !source.startsWith("http://") && !source.startsWith("https://")) {
+			int slash = g_story.source_url.lastIndexOf('/');
+			source = slash > 0 ? g_story.source_url.substring(0, slash + 1) + source
+			                   : remote_catalog::storyUrl(source);
+		}
+		add_narration_button(content, source);
+	}
+#endif
 
 	lv_obj_t *text_wrap = lv_obj_create(content);
 	lv_obj_remove_style_all(text_wrap);
@@ -536,6 +603,7 @@ static void start_story(const Story_t &st, const String &nodeKey, const story_pr
 	String start = nodeKey;
 	Story_t loaded;
 	if (!story::load(st, loaded)) {
+		audio::stop_narration();
 		Serial.println("[STORY] Failed to load story: " + st.file);
 		ui_library_screen_show();
 		return;

@@ -17,6 +17,7 @@ Exits with status 1 if any problem is found.
 import json
 import os
 import sys
+from urllib.parse import urlparse
 
 # Mirrors remote_catalog::isValidFileName() on the device
 MAX_FILE_NAME_LEN = 30
@@ -45,7 +46,7 @@ def check_file_name(name):
     return None
 
 
-def check_story(story):
+def check_story(story, root=None):
     issues = []
     nodes = story.get('nodes', {})
     items = {i.get('id') for i in story.get('item_definitions', [])}
@@ -87,6 +88,21 @@ def check_story(story):
             check_names(key, 'props', node['props'], PROPS)
         if node.get('sound') and node['sound'] not in SOUNDS:
             issues.append(f'{key}: unknown sound "{node["sound"]}" (one of {", ".join(sorted(SOUNDS))})')
+        narration = node.get('narration')
+        if narration is not None:
+            if not isinstance(narration, str) or not narration or len(narration) > 240:
+                issues.append(f'{key}: narration must be a path or URL of 1 to 240 characters')
+            elif narration.startswith('/'):
+                if '..' in narration or not narration.lower().endswith('.wav'):
+                    issues.append(f'{key}: local narration must be an absolute .wav path without ".."')
+            else:
+                parsed = urlparse(narration)
+                if parsed.scheme in ('http', 'https') and parsed.netloc and parsed.path.lower().endswith('.wav'):
+                    pass
+                elif parsed.scheme or narration.startswith('.') or '\\' in narration or '..' in narration or not narration.lower().endswith('.wav'):
+                    issues.append(f'{key}: narration must be a safe relative .wav path, HTTP(S) URL, or local path')
+                elif root and not os.path.isfile(os.path.join(root, narration)):
+                    issues.append(f'{key}: narration file "{narration}" does not exist')
         if 'led' in node and node['led'] not in LED_EFFECTS:
             issues.append(f'{key}: unknown led effect "{node["led"]}"')
         for choice in node.get('choices', []):
@@ -142,7 +158,7 @@ def main():
             failed = True
 
         with open(path) as f:
-            issues = check_story(json.load(f))
+            issues = check_story(json.load(f), root)
         for issue in issues:
             print(f'{name}: {issue}')
         failed |= bool(issues)

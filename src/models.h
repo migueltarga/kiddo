@@ -92,6 +92,7 @@ struct Node_t
     std::vector<String> props;      /**< Things on the scene ("ball", "cake"...), when props_set */
     bool props_set = false;         /**< The page lists its props (even none); otherwise they come from the text */
     String sound;                   /**< Sound effect played when the page opens ("success", "oops"...) */
+    String narration;               /**< Optional local WAV path or HTTPS URL for spoken page audio */
     String led;                     /**< Optional RGB light cue ("red", "pulse:blue", "rainbow"...) */
 
     // Inventory choice fields
@@ -110,6 +111,7 @@ struct Story_t
     String title;                           /**< Story title */
     String start;                           /**< ID of starting node */
     String file;                            /**< SPIFFS path the story was loaded from */
+    String source_url;                      /**< Original catalog URL for relative media paths */
     bool has_inventory;                     /**< True if story uses inventory system */
     bool night = false;                     /**< Happens at night: scenes are shown dark */
     std::vector<String> cast;               /**< Figures on every scene, when cast_set (the heroes) */

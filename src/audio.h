@@ -51,6 +51,16 @@ void play_click();
  */
 void play(Sound sound);
 
+/** @brief State of optional spoken page narration. */
+enum class NarrationState : uint8_t { Idle, Loading, Playing, Paused, Error };
+
+/** @brief Start or restart a PCM WAV recording from SPIFFS or an HTTPS URL. */
+bool play_narration(const String& source);
+void pause_narration();
+void resume_narration();
+void stop_narration();
+NarrationState narration_state();
+
 /**
  * @brief Find a sound by the name stories use ("success", "oops", "chime"...)
  * @return True if the name is known

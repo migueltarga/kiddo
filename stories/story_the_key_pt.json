@@ -44,89 +44,160 @@
     "inicio": {
       "text": "Você acorda em uma floresta misteriosa com apenas um mapa antigo em sua mochila.\nO ar é úmido e você ouve pássaros cantando ao longe.\nExistem dois caminhos à sua frente.",
       "choices": [
-        { "text": "Seguir pelo caminho da esquerda", "next": "caminho_esquerda" },
-        { "text": "Seguir pelo caminho da direita", "next": "caminho_direita" },
-        { "text": "Olhar o mapa primeiro", "next": "ver_mapa", "required_item": "map" }
-      ]
+        {
+          "text": "Seguir pelo caminho da esquerda",
+          "next": "caminho_esquerda"
+        },
+        {
+          "text": "Seguir pelo caminho da direita",
+          "next": "caminho_direita"
+        },
+        {
+          "text": "Olhar o mapa primeiro",
+          "next": "ver_mapa",
+          "required_item": "map"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/inicio.wav"
     },
     "ver_mapa": {
       "text": "Você olha o mapa antigo. Ele mostra uma passagem secreta à direita, escondida por arbustos.\nAs marcas são fracas, mas o mapa parece confiável.",
       "choices": [
-        { "text": "Seguir a passagem secreta", "next": "passagem_secreta" },
-        { "text": "Ignorar o mapa e ir à esquerda", "next": "caminho_esquerda" }
-      ]
+        {
+          "text": "Seguir a passagem secreta",
+          "next": "passagem_secreta"
+        },
+        {
+          "text": "Ignorar o mapa e ir à esquerda",
+          "next": "caminho_esquerda"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/ver_mapa.wav"
     },
     "caminho_esquerda": {
       "text": "Você segue pelo caminho da esquerda. O chão está coberto de musgo e o ar fica mais frio.\nLogo à frente, você encontra uma chave dourada brilhante no chão.\nUm pouco mais adiante, uma espada enferrujada está presa em um tronco.",
       "gives_item": "golden_key",
       "choices": [
-        { "text": "Pegar a espada", "next": "pegar_espada" },
-        { "text": "Seguir em frente sem espada", "next": "porta_trancada" }
-      ]
+        {
+          "text": "Pegar a espada",
+          "next": "pegar_espada"
+        },
+        {
+          "text": "Seguir em frente sem espada",
+          "next": "porta_trancada"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/caminho_esquerda.wav"
     },
     "pegar_espada": {
       "text": "Você puxa a espada enferrujada. Ela é pesada, mas parece resistente.\nAo fundo, você escuta rosnados fracos, como se algo o observasse.",
       "gives_item": "sword",
       "choices": [
-        { "text": "Seguir em frente", "next": "porta_trancada" }
-      ]
+        {
+          "text": "Seguir em frente",
+          "next": "porta_trancada"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/pegar_espada.wav"
     },
     "caminho_direita": {
       "text": "Você segue pelo caminho da direita. O chão estala com folhas secas.\nNo fim da trilha, há uma porta trancada esculpida em pedra.\nAo lado da porta, uma poção brilhante repousa sobre uma pedra, emitindo energia suave.",
       "gives_item": "magic_potion",
       "choices": [
-        { "text": "Tentar abrir a porta", "next": "tentar_porta" },
-        { "text": "Voltar", "next": "inicio" }
-      ]
+        {
+          "text": "Tentar abrir a porta",
+          "next": "tentar_porta"
+        },
+        {
+          "text": "Voltar",
+          "next": "inicio"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/caminho_direita.wav"
     },
     "passagem_secreta": {
       "text": "Empurrando os arbustos, você encontra um túnel escondido. O ar é úmido e ecoa com sussurros.\nNo fim do túnel, há uma câmara do tesouro.\nMas um guardião sombrio bloqueia a passagem, com olhos vermelhos brilhantes.",
       "choices": [
-        { "text": "Abrir inventário", "next": "inventario_guardiao" },
-        { "text": "Fugir", "next": "inicio" }
-      ]
+        {
+          "text": "Abrir inventário",
+          "next": "inventario_guardiao"
+        },
+        {
+          "text": "Fugir",
+          "next": "inicio"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/passagem_secreta.wav"
     },
     "inventario_guardiao": {
       "text": "Selecione um item do inventário para enfrentar o guardião.",
       "inventory_choice": true,
       "correct_item": "sword",
       "success_next": "derrotar_guardiao",
-      "failure_next": "falha"
+      "failure_next": "falha",
+      "narration": "audio/story_the_key_pt/inventario_guardiao.wav"
     },
     "derrotar_guardiao": {
       "text": "Você ergue a espada e ataca com coragem. Faíscas voam quando o guardião reage.\nCom um golpe final, ele se desfaz em fumaça.\nNo centro da sala, repousa um baú de tesouro.",
       "gives_item": "treasure",
       "choices": [
-        { "text": "Pegar o tesouro e sair", "next": "vitoria_tesouro" }
-      ]
+        {
+          "text": "Pegar o tesouro e sair",
+          "next": "vitoria_tesouro"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/derrotar_guardiao.wav"
     },
     "tentar_porta": {
       "text": "A porta está firmemente trancada. Símbolos estranhos brilham na sua superfície.\nEla parece reagir apenas a itens especiais.",
       "choices": [
-        { "text": "Abrir inventário", "next": "inventario_porta" },
-        { "text": "Procurar outro caminho", "next": "caminho_esquerda" },
-        { "text": "Voltar ao início", "next": "inicio" }
-      ]
+        {
+          "text": "Abrir inventário",
+          "next": "inventario_porta"
+        },
+        {
+          "text": "Procurar outro caminho",
+          "next": "caminho_esquerda"
+        },
+        {
+          "text": "Voltar ao início",
+          "next": "inicio"
+        }
+      ],
+      "narration": "audio/story_the_key_pt/tentar_porta.wav"
     },
     "inventario_porta": {
       "text": "Selecione um item do inventário para tentar abrir a porta.",
       "inventory_choice": true,
       "correct_item": "golden_key",
       "success_next": "abrir_porta",
-      "failure_next": "falha"
+      "failure_next": "falha",
+      "narration": "audio/story_the_key_pt/inventario_porta.wav"
     },
     "porta_trancada": {
       "text": "Você chega diante da mesma porta esculpida em pedra, coberta por runas brilhantes.\nTalvez agora você tenha o item necessário para abri-la.",
       "choices": [
-        { "text": "Abrir inventário", "next": "inventario_porta" },
-        { "text": "Voltar", "next": "inicio" }
+        {
+          "text": "Abrir inventário",
+          "next": "inventario_porta"
+        },
+        {
+          "text": "Voltar",
+          "next": "inicio"
+        }
       ]
     },
     "abrir_porta": {
       "text": "A chave dourada se encaixa perfeitamente, e as runas brilham intensamente.\nA porta pesada se abre lentamente, revelando um lindo jardim.\nNo centro, há uma fonte que irradia energia mágica.",
       "choices": [
-        { "text": "Beber da fonte", "next": "fonte_magica" },
-        { "text": "Descansar no jardim", "next": "jardim" }
+        {
+          "text": "Beber da fonte",
+          "next": "fonte_magica"
+        },
+        {
+          "text": "Descansar no jardim",
+          "next": "jardim"
+        }
       ]
     },
     "fonte_magica": {

@@ -260,9 +260,13 @@ namespace remote_catalog
 
         if (!doc["lang"].is<const char*>() || strlen(doc["lang"].as<const char*>()) == 0) {
             doc["lang"] = lang;
-            payload = "";
-            serializeJson(doc, payload);
         }
+
+        // Preserve the story's origin so relative narration still works if
+        // another catalog is selected later.
+        doc["_source_url"] = url;
+        payload = "";
+        serializeJson(doc, payload);
 
         return FileSystem::writeFile(localPath, payload);
     }
