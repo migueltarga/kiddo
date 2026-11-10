@@ -159,7 +159,8 @@ static void update_narration_label(NarrationControl *control)
 	case audio::NarrationState::Error: label = s->narration_retry; break;
 	default: break;
 	}
-	if (strcmp(lv_label_get_text(control->label), label) != 0)
+	const char *current = lv_label_get_text(control->label);
+	if (!current || strcmp(current, label) != 0)
 		lv_label_set_text(control->label, label);
 }
 
